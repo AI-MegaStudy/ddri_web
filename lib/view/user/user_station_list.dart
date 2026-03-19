@@ -91,10 +91,10 @@ class UserStationList extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                '주변 대여소 ${ctrl.items.length}개',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.grey.shade700,
-                    ),
+                ctrl.stationListTitle,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -119,7 +119,7 @@ class UserStationList extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              '주변 대여소 ${ctrl.items.length}개',
+              ctrl.stationListTitle,
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),

@@ -19,6 +19,7 @@ FastAPI는 현재 아래 역할을 맡는다.
 - 사용자 저장 기능 없음
 - 외부 API + 로컬 마스터 + 서버 추론 구조
 - DB는 필수 계층이 아니며, 필요 시 `prediction_logs`만 저장
+- 현 단계에서는 마스터 데이터 API 자동 갱신과 DB 저장을 선행 범위로 두지 않음
 
 ## 2. 프로젝트 구조
 
@@ -94,6 +95,7 @@ pip install -r requirements.txt
 `fastapi/.env` 예시:
 
 ```env
+DDRI_SERVICE_MODE=beta
 DB_HOST=your_host
 DB_USER=your_user
 DB_PASSWORD=your_password
@@ -102,6 +104,8 @@ DB_PORT=13306
 ```
 
 설명:
+- `DDRI_SERVICE_MODE=beta`: 사용자/관리자 화면에 베타 고정 6개와 `베타` 표기 노출
+- `DDRI_SERVICE_MODE=live`: 베타 제한과 `베타` 표기를 끄고 운영 모드 응답 경로 사용
 - 현재 DB는 필수는 아니다
 - DB를 안 쓰는 동안에도 `.env`는 남겨둘 수 있다
 - 추후 `prediction_logs` 저장 시 사용 가능
@@ -126,6 +130,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - 날씨: Open-Meteo 기준
 - 스테이션 마스터: 로컬 데이터 또는 별도 로딩 구조 기준
 - 예측 모델: 서버 로컬 파일 로드 예정
+- 마스터 데이터 갱신 자동화와 DB 적재는 후순위 검토 항목
+- 실시간 재고는 서울시 원천 데이터이므로 서비스 DB에 누적 저장하지 않음
+- 미래 시점 재고도 예측 결과와 현재 재고의 계산값으로 다루며 기본 적재 대상이 아님
 
 ### DB 사용
 
@@ -136,6 +143,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `prediction_logs`
 
 즉 예전처럼 `stations`, `station_risk_snapshots`, `realtime_station_stock`를 전부 DB에 넣는 구조가 아니라, 필요 시 예측 로그만 저장하는 방향이다.
+실시간 재고는 외부 API 기준값을 조회 시점에 사용하고, 서비스 내부 누적 저장은 기본 범위에서 제외한다.
+
+현재 판단으로는 마스터 데이터 저장을 뒤로 미뤄도 최소 스키마에는 직접 영향이 없다.
+검토 포인트는 스키마 변경이 아니라, 실제 운영 전환 시 `live` 모드가 어떤 마스터 원본을 읽을지다.
 
 ## 7. 날씨 API 역할
 

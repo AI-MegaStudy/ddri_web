@@ -7,6 +7,7 @@
 
 - API는 조회 전용을 기본으로 한다.
 - 실시간 재고는 외부 API를 기준 진실로 본다.
+- 실시간 재고는 조회 시점 참조값이며, 서비스 내부 영속 저장을 기본 전제로 두지 않는다.
 - 예측 모델 입력 전체를 프론트가 직접 만들지 않는다.
 - 프론트는 최소 입력만 보내고, 서버가 런타임 피처를 구성한다.
 
@@ -73,16 +74,44 @@
 5. 서버가 `joblib` 추론
 6. 서버가 화면용 응답 조합
 
-### 현재 예측 방식
+### 현재 모델 가정 초안
 
-- 현재 재고 + 예측 순변화
-- 또는 관리 화면용 조합 계산
+현재 확보한 분석 자료 기준으로는, 운영 모델의 1차 가정을 아래처럼 둔다.
+
+- 적용 스테이션은 성능 상위 6개를 우선 사용
+  - `2348`, `2335`, `2377`, `2384`, `2306`, `2375`
+- 직접 예측 타깃은 `rental_count`, `return_count`
+- 재고는 직접 예측값이 아니라 현재 재고와 예측 대여/반납량의 계산값으로 다룸
 
 예시 개념:
 
 ```text
-predicted_stock = current_stock + predicted_net_change
+predicted_remaining_bikes = current_bike_stock - predicted_rental_count + predicted_return_count
 ```
+
+### 서버 내부 피처 초안
+
+현재 자료 기준으로 서버가 내부에서 조합할 가능성이 높은 피처는 아래와 같다.
+
+- `station_id`
+- `target_datetime`
+- `current_bike_stock`
+- `year`, `month`, `day`, `weekday`, `hour`
+- `day_type`
+- `base_value`
+- `month_weight`
+- `year_weight`
+- `hour_weight`
+- `pattern_prior`
+- `corrected_pattern_prior`
+
+주의:
+
+- 위 값 중 프론트가 직접 보내는 것은 아니다.
+- 특히 `year_weight`는 사용자 입력이 아니라 서버 내부 보정값으로 취급한다.
+- `year_weight`는 초기에는 현재 테스트 기준값으로 고정하고, 이후 실제 데이터와 비교하며 보정·갱신하는 전제를 둔다.
+- 현재 단계에서는 `year_weight`를 변수화된 고정값으로만 사용한다.
+- 별도 보정계수나 보정 테이블은 당장 운영에 넣지 않고, 실제 관리 필요성이 확인될 때 후속 도입한다.
 
 ## 5. API 목록
 
@@ -167,6 +196,7 @@ predicted_stock = current_stock + predicted_net_change
 - 모델 내부 피처 전체를 노출하지 않음
 - 예외 스테이션은 별도 배열로 분리 가능
 - 주간 날씨와 선택 시각 날씨를 함께 포함할 수 있다
+- 베타 기간에는 고정 목록 모드(`beta`)를 허용하고, 운영 전환 후 `live` 모드 응답으로 확장 가능해야 한다
 
 ### 관리자 응답
 
@@ -174,6 +204,7 @@ predicted_stock = current_stock + predicted_net_change
 - 재고, 예측값, 차이, 위험도, 우선순위 포함
 - 예외 스테이션은 별도 배열
 - 기준 시각 판단을 돕는 날씨 정보 포함 가능
+- 베타 종료 후에도 응답 계약 자체는 유지하고, 데이터 소스만 `live` 모드로 교체할 수 있어야 한다
 
 ## 8. 예외 처리 원칙
 
@@ -207,6 +238,16 @@ predicted_stock = current_stock + predicted_net_change
 ```
 
 실제값은 운영 중 바로 쓰지 않고, 나중에 공개 데이터와 배치 매칭할 수 있다.
+즉 저장 대상은 실시간 재고 원본이 아니라, 특정 요청 시점의 예측 결과와 메타데이터다.
+
+현재 모델 가정 기준으로는 `prediction_logs` 정의 시 아래 항목 포함 여부를 검토할 수 있다.
+
+- `predicted_rental_count`
+- `predicted_return_count`
+- `predicted_remaining_bikes`
+- `model_version`
+- 필요 시 `year_weight_version` 또는 보정 기준 시각
+- 단, 현재 단계에서는 추가 보정계수 로그는 정의하지 않는다.
 
 ## 10. 현재 결론
 
@@ -214,3 +255,5 @@ predicted_stock = current_stock + predicted_net_change
 - 서버가 모델 입력 피처를 조합한다.
 - API는 화면 응답 중심으로 단순하게 유지한다.
 - DB는 API 계약의 필수 조건이 아니다.
+- 마스터 데이터 API 자동 갱신과 DB 저장은 현재 선행 범위가 아니다.
+- 따라서 당장 검토 대상은 DB 스키마 확대보다 `live` 모드의 마스터 로딩 원본과 갱신 절차다.

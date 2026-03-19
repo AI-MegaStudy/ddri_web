@@ -48,26 +48,29 @@ class AdminView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '관리자 - 재배치 판단 지원',
-                            style: Theme.of(context).textTheme.headlineMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.8,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '강남구 따릉이 실시간 수요 예측 및 재배치 우선순위 대시보드',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
+                      Obx(() {
+                        final ctrl = Get.find<AdminPageController>();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '관리자 - 재배치 판단 지원',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.8,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              ctrl.dashboardSubtitle,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: const Color(0xFF64748B)),
+                            ),
+                          ],
+                        );
+                      }),
                       SizedBox(height: DesignToken.adminSectionSpacing),
                       const AdminControlArea(),
                       SizedBox(height: DesignToken.adminSectionSpacing),

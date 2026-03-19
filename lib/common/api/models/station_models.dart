@@ -14,6 +14,7 @@ class StationNearbyItem {
     required this.bikeAvailabilityFlag,
     required this.availabilityLevel,
     required this.operationalStatus,
+    required this.serviceTag,
   });
 
   final int stationId;
@@ -26,9 +27,11 @@ class StationNearbyItem {
   final double predictedRentalCount;
   final double predictedRemainingBikes;
   final bool bikeAvailabilityFlag;
+
   /// sufficient | normal | low
   final String availabilityLevel;
   final String operationalStatus;
+  final String serviceTag;
 
   factory StationNearbyItem.fromJson(Map<String, dynamic> json) {
     return StationNearbyItem(
@@ -39,11 +42,14 @@ class StationNearbyItem {
       longitude: (json['longitude'] as num).toDouble(),
       distanceM: (json['distance_m'] as num).toDouble(),
       currentBikeStock: json['current_bike_stock'] as int? ?? 0,
-      predictedRentalCount: (json['predicted_rental_count'] as num?)?.toDouble() ?? 0,
-      predictedRemainingBikes: (json['predicted_remaining_bikes'] as num?)?.toDouble() ?? 0,
+      predictedRentalCount:
+          (json['predicted_rental_count'] as num?)?.toDouble() ?? 0,
+      predictedRemainingBikes:
+          (json['predicted_remaining_bikes'] as num?)?.toDouble() ?? 0,
       bikeAvailabilityFlag: json['bike_availability_flag'] as bool? ?? false,
       availabilityLevel: json['availability_level'] as String? ?? 'low',
       operationalStatus: json['operational_status'] as String? ?? '',
+      serviceTag: json['service_tag'] as String? ?? '',
     );
   }
 }
@@ -61,6 +67,7 @@ class StationRiskItem {
     required this.riskScore,
     required this.reallocationPriority,
     required this.operationalStatus,
+    required this.serviceTag,
   });
 
   final int stationId;
@@ -73,6 +80,7 @@ class StationRiskItem {
   final double riskScore;
   final int reallocationPriority;
   final String operationalStatus;
+  final String serviceTag;
 
   factory StationRiskItem.fromJson(Map<String, dynamic> json) {
     return StationRiskItem(
@@ -86,6 +94,7 @@ class StationRiskItem {
       riskScore: (json['risk_score'] as num?)?.toDouble() ?? 0,
       reallocationPriority: json['reallocation_priority'] as int? ?? 0,
       operationalStatus: json['operational_status'] as String? ?? '',
+      serviceTag: json['service_tag'] as String? ?? '',
     );
   }
 }
@@ -102,6 +111,7 @@ class StationMasterItem {
     required this.longitude,
     required this.clusterCode,
     required this.operationalStatus,
+    required this.serviceTag,
   });
 
   final int stationId;
@@ -113,6 +123,7 @@ class StationMasterItem {
   final double longitude;
   final String clusterCode;
   final String operationalStatus;
+  final String serviceTag;
 
   factory StationMasterItem.fromJson(Map<String, dynamic> json) {
     return StationMasterItem(
@@ -125,6 +136,7 @@ class StationMasterItem {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       clusterCode: json['cluster_code'] as String? ?? '',
       operationalStatus: json['operational_status'] as String? ?? '',
+      serviceTag: json['service_tag'] as String? ?? '',
     );
   }
 }
@@ -155,8 +167,10 @@ class WeatherDayItem {
       weatherType: json['weather_type'] as String? ?? '',
       weatherLow: (json['weather_low'] as num?)?.toDouble() ?? 0,
       weatherHigh: (json['weather_high'] as num?)?.toDouble() ?? 0,
-      precipitationProbability: ((json['precipitation_probability'] ??
-                  json['precipitation_probability_max']) as num?)
+      precipitationProbability:
+          ((json['precipitation_probability'] ??
+                      json['precipitation_probability_max'])
+                  as num?)
               ?.toDouble() ??
           0,
       iconUrl: json['icon_url'] as String? ?? '',

@@ -11,7 +11,7 @@ import '../core/design_token.dart';
 /// permanent: true로 등록되어 페이지 전환 시에도 유지.
 class UserPageController extends GetxController {
   UserPageController({DdriApiClient? apiClient})
-      : _api = apiClient ?? DdriApiClient();
+    : _api = apiClient ?? DdriApiClient();
 
   final DdriApiClient _api;
 
@@ -32,9 +32,14 @@ class UserPageController extends GetxController {
   final RxBool isLoadingWeather = false.obs;
   final RxString errorMessage = ''.obs;
   final RxString weatherErrorMessage = ''.obs;
+  final RxString serviceMode = 'beta'.obs;
+  final RxString listMode = ''.obs;
 
   /// 위치가 선택되었는지 (위경도 존재)
   bool get hasLocation => lat.value != null && lng.value != null;
+  bool get isBetaMode => serviceMode.value == 'beta';
+  String get stationListTitle =>
+      isBetaMode ? '베타 대여소 ${items.length}개' : '주변 대여소 ${items.length}개';
 
   @override
   void onInit() {
@@ -63,10 +68,7 @@ class UserPageController extends GetxController {
       lat.value = pos.latitude;
       lng.value = pos.longitude;
       address.value = '현재 위치';
-      await Future.wait([
-        _fetchStations(),
-        _fetchWeather(),
-      ]);
+      await Future.wait([_fetchStations(), _fetchWeather()]);
     } catch (e) {
       errorMessage.value = '위치를 가져올 수 없습니다. 주소 검색을 이용해 주세요.';
     } finally {
@@ -75,15 +77,16 @@ class UserPageController extends GetxController {
   }
 
   /// 주소 검색 결과 적용 후 조회
-  Future<void> applyAddressAndFetch(double newLat, double newLng, String addr) async {
+  Future<void> applyAddressAndFetch(
+    double newLat,
+    double newLng,
+    String addr,
+  ) async {
     debugPrint('[DDRI] 주소 검색 좌표: lat=$newLat, lng=$newLng, addr=$addr');
     lat.value = newLat;
     lng.value = newLng;
     address.value = addr;
-    await Future.wait([
-      _fetchStations(),
-      _fetchWeather(),
-    ]);
+    await Future.wait([_fetchStations(), _fetchWeather()]);
   }
 
   /// 대여소 목록 조회
@@ -102,6 +105,8 @@ class UserPageController extends GetxController {
         limit: 20,
         radiusM: radiusM.value,
       );
+      serviceMode.value = res.serviceMode;
+      listMode.value = res.listMode;
       items.value = res.items;
       if (res.items.isNotEmpty && focusedStation.value == null) {
         focusedStation.value = res.items.first;
@@ -120,6 +125,8 @@ class UserPageController extends GetxController {
         errorMessage.value = '대여소 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
       }
       items.clear();
+      serviceMode.value = 'beta';
+      listMode.value = '';
     } finally {
       isLoading.value = false;
     }
@@ -171,10 +178,7 @@ class UserPageController extends GetxController {
   Future<void> onDatetimeChanged(DateTime dt) async {
     setTargetDatetime(dt);
     if (hasLocation) {
-      await Future.wait([
-        _fetchStations(),
-        _fetchWeather(),
-      ]);
+      await Future.wait([_fetchStations(), _fetchWeather()]);
     }
   }
 }

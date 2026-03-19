@@ -11,7 +11,8 @@ import 'models/station_models.dart';
 /// DDRI API 클라이언트.
 /// 모든 API 호출은 이 클라이언트를 통해 수행.
 class DdriApiClient {
-  DdriApiClient({String? baseUrl}) : _baseUrl = baseUrl ?? CustomCommonUtil.getApiBaseUrlSync();
+  DdriApiClient({String? baseUrl})
+    : _baseUrl = baseUrl ?? CustomCommonUtil.getApiBaseUrlSync();
 
   final String _baseUrl;
 
@@ -19,7 +20,10 @@ class DdriApiClient {
   String get _v1 => '$_baseUrl/v1';
 
   /// GET 요청. 4xx/5xx 시 [ApiException] 발생.
-  Future<Map<String, dynamic>> _get(String path, {Map<String, String>? queryParams}) async {
+  Future<Map<String, dynamic>> _get(
+    String path, {
+    Map<String, String>? queryParams,
+  }) async {
     final uri = Uri.parse('$_v1$path').replace(queryParameters: queryParams);
     final response = await http.get(uri);
     if (response.statusCode >= 400) {
@@ -43,11 +47,15 @@ class DdriApiClient {
       'target_datetime': targetDatetime,
       'limit': limit.toString(),
     };
-    if (radiusM != null) params['radius_m'] = radiusM.toString();
+    if (radiusM != null) {
+      params['radius_m'] = radiusM.toString();
+    }
 
     final json = await _get('/user/stations/nearby', queryParams: params);
     final res = NearbyStationsResponse.fromJson(json);
-    debugPrint('[DDRI] API 응답 user_location: lat=${res.userLocation.lat}, lng=${res.userLocation.lng}');
+    debugPrint(
+      '[DDRI] API 응답 user_location: lat=${res.userLocation.lat}, lng=${res.userLocation.lng}',
+    );
     return res;
   }
 
@@ -64,21 +72,28 @@ class DdriApiClient {
       'sort_by': sortBy,
       'sort_order': sortOrder,
     };
-    if (urgentOnly != null) params['urgent_only'] = urgentOnly.toString();
-    if (districtName != null && districtName.isNotEmpty) params['district_name'] = districtName;
+    if (urgentOnly != null) {
+      params['urgent_only'] = urgentOnly.toString();
+    }
+    if (districtName != null && districtName.isNotEmpty) {
+      params['district_name'] = districtName;
+    }
 
     final json = await _get('/admin/stations/risk', queryParams: params);
     return RiskStationsResponse.fromJson(json);
   }
 
   /// 스테이션 마스터 조회
-  Future<StationsListResponse> getStations({
-    String? districtName,
-  }) async {
+  Future<StationsListResponse> getStations({String? districtName}) async {
     final params = <String, String>{};
-    if (districtName != null && districtName.isNotEmpty) params['district_name'] = districtName;
+    if (districtName != null && districtName.isNotEmpty) {
+      params['district_name'] = districtName;
+    }
 
-    final json = await _get('/stations', queryParams: params.isNotEmpty ? params : null);
+    final json = await _get(
+      '/stations',
+      queryParams: params.isNotEmpty ? params : null,
+    );
     return StationsListResponse.fromJson(json);
   }
 
@@ -87,10 +102,10 @@ class DdriApiClient {
     required double lat,
     required double lon,
   }) async {
-    final json = await _get('/weather/direct', queryParams: {
-      'lat': lat.toString(),
-      'lon': lon.toString(),
-    });
+    final json = await _get(
+      '/weather/direct',
+      queryParams: {'lat': lat.toString(), 'lon': lon.toString()},
+    );
     return (json['results'] as List<dynamic>?)
             ?.map((e) => WeatherDayItem.fromJson(e as Map<String, dynamic>))
             .toList() ??
@@ -103,11 +118,14 @@ class DdriApiClient {
     required double lon,
     required String targetDatetime,
   }) async {
-    final json = await _get('/weather/direct/single', queryParams: {
-      'lat': lat.toString(),
-      'lon': lon.toString(),
-      'target_datetime': targetDatetime,
-    });
+    final json = await _get(
+      '/weather/direct/single',
+      queryParams: {
+        'lat': lat.toString(),
+        'lon': lon.toString(),
+        'target_datetime': targetDatetime,
+      },
+    );
     final result = json['result'];
     if (result is Map<String, dynamic>) {
       return WeatherDayItem.fromJson(result);
@@ -129,12 +147,16 @@ class ApiException implements Exception {
 class NearbyStationsResponse {
   const NearbyStationsResponse({
     required this.targetDatetime,
+    required this.serviceMode,
+    required this.listMode,
     required this.userLocation,
     required this.items,
     required this.exceptions,
   });
 
   final String targetDatetime;
+  final String serviceMode;
+  final String listMode;
   final UserLocation userLocation;
   final List<StationNearbyItem> items;
   final List<ExceptionItem> exceptions;
@@ -142,12 +164,20 @@ class NearbyStationsResponse {
   factory NearbyStationsResponse.fromJson(Map<String, dynamic> json) {
     return NearbyStationsResponse(
       targetDatetime: json['target_datetime'] as String? ?? '',
-      userLocation: UserLocation.fromJson(json['user_location'] as Map<String, dynamic>? ?? {}),
-      items: (json['items'] as List<dynamic>?)
-              ?.map((e) => StationNearbyItem.fromJson(e as Map<String, dynamic>))
+      serviceMode: json['service_mode'] as String? ?? 'beta',
+      listMode: json['list_mode'] as String? ?? '',
+      userLocation: UserLocation.fromJson(
+        json['user_location'] as Map<String, dynamic>? ?? {},
+      ),
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map(
+                (e) => StationNearbyItem.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
-      exceptions: (json['exceptions'] as List<dynamic>?)
+      exceptions:
+          (json['exceptions'] as List<dynamic>?)
               ?.map((e) => ExceptionItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -161,9 +191,9 @@ class UserLocation {
   final double lat;
   final double lng;
   factory UserLocation.fromJson(Map<String, dynamic> json) => UserLocation(
-        lat: (json['lat'] as num?)?.toDouble() ?? 0,
-        lng: (json['lng'] as num?)?.toDouble() ?? 0,
-      );
+    lat: (json['lat'] as num?)?.toDouble() ?? 0,
+    lng: (json['lng'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// 예외 스테이션 (실시간 비노출 등)
@@ -172,21 +202,25 @@ class ExceptionItem {
   final int stationId;
   final String reason;
   factory ExceptionItem.fromJson(Map<String, dynamic> json) => ExceptionItem(
-        stationId: json['station_id'] as int? ?? 0,
-        reason: json['reason'] as String? ?? '',
-      );
+    stationId: json['station_id'] as int? ?? 0,
+    reason: json['reason'] as String? ?? '',
+  );
 }
 
 /// 위험 대여소 응답 (GET /v1/admin/stations/risk)
 class RiskStationsResponse {
   const RiskStationsResponse({
     required this.baseDatetime,
+    required this.serviceMode,
+    required this.listMode,
     required this.summary,
     required this.items,
     required this.exceptions,
   });
 
   final String baseDatetime;
+  final String serviceMode;
+  final String listMode;
   final RiskSummary summary;
   final List<StationRiskItem> items;
   final List<ExceptionItem> exceptions;
@@ -194,12 +228,18 @@ class RiskStationsResponse {
   factory RiskStationsResponse.fromJson(Map<String, dynamic> json) {
     return RiskStationsResponse(
       baseDatetime: json['base_datetime'] as String? ?? '',
-      summary: RiskSummary.fromJson(json['summary'] as Map<String, dynamic>? ?? {}),
-      items: (json['items'] as List<dynamic>?)
+      serviceMode: json['service_mode'] as String? ?? 'beta',
+      listMode: json['list_mode'] as String? ?? '',
+      summary: RiskSummary.fromJson(
+        json['summary'] as Map<String, dynamic>? ?? {},
+      ),
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((e) => StationRiskItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      exceptions: (json['exceptions'] as List<dynamic>?)
+      exceptions:
+          (json['exceptions'] as List<dynamic>?)
               ?.map((e) => ExceptionItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -220,21 +260,34 @@ class RiskSummary {
   final int exceptionCount;
   final double avgRiskScore;
   factory RiskSummary.fromJson(Map<String, dynamic> json) => RiskSummary(
-        totalCount: json['total_count'] as int? ?? 0,
-        riskCount: json['risk_count'] as int? ?? 0,
-        exceptionCount: json['exception_count'] as int? ?? 0,
-        avgRiskScore: (json['avg_risk_score'] as num?)?.toDouble() ?? 0,
-      );
+    totalCount: json['total_count'] as int? ?? 0,
+    riskCount: json['risk_count'] as int? ?? 0,
+    exceptionCount: json['exception_count'] as int? ?? 0,
+    avgRiskScore: (json['avg_risk_score'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// 스테이션 마스터 목록 응답 (GET /v1/stations)
 class StationsListResponse {
-  const StationsListResponse({required this.items, required this.totalCount});
+  const StationsListResponse({
+    required this.serviceMode,
+    required this.listMode,
+    required this.items,
+    required this.totalCount,
+  });
+  final String serviceMode;
+  final String listMode;
   final List<StationMasterItem> items;
   final int totalCount;
-  factory StationsListResponse.fromJson(Map<String, dynamic> json) => StationsListResponse(
-        items: (json['items'] as List<dynamic>?)
-                ?.map((e) => StationMasterItem.fromJson(e as Map<String, dynamic>))
+  factory StationsListResponse.fromJson(Map<String, dynamic> json) =>
+      StationsListResponse(
+        serviceMode: json['service_mode'] as String? ?? 'beta',
+        listMode: json['list_mode'] as String? ?? '',
+        items:
+            (json['items'] as List<dynamic>?)
+                ?.map(
+                  (e) => StationMasterItem.fromJson(e as Map<String, dynamic>),
+                )
                 .toList() ??
             [],
         totalCount: json['total_count'] as int? ?? 0,

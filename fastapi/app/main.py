@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
+from app.core.runtime_config import get_service_mode
 
 # .env 파일에서 환경변수 로드
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
@@ -44,6 +45,7 @@ async def root():
         "message": "DDRI API",
         "status": "running",
         "version": "1.0.0",
+        "service_mode": get_service_mode(),
         "endpoints": {
             "health": "/health",
             "docs": "/docs",
@@ -65,7 +67,8 @@ async def health_check():
     
     return {
         "status": "healthy",
-        "message": "API is running"
+        "message": "API is running",
+        "service_mode": get_service_mode(),
     }
 
 

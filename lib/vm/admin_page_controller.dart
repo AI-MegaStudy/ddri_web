@@ -9,7 +9,7 @@ import '../common/api/models/station_models.dart';
 /// onReady에서 fetchRiskStations 자동 호출.
 class AdminPageController extends GetxController {
   AdminPageController({DdriApiClient? apiClient})
-      : _api = apiClient ?? DdriApiClient();
+    : _api = apiClient ?? DdriApiClient();
 
   final DdriApiClient _api;
 
@@ -27,6 +27,8 @@ class AdminPageController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxBool exceptionsExpanded = false.obs;
+  final RxString serviceMode = 'beta'.obs;
+  final RxString listMode = ''.obs;
 
   /// API용 ISO 8601 형식
   String get baseDatetimeIso =>
@@ -38,6 +40,10 @@ class AdminPageController extends GetxController {
     'stock_gap',
   ];
   static const List<String> sortOrderOptions = ['asc', 'desc'];
+  bool get isBetaMode => serviceMode.value == 'beta';
+  String get dashboardSubtitle => isBetaMode
+      ? '베타 기간에는 선별된 6개 대여소만 노출하는 재배치 우선순위 대시보드'
+      : '강남구 따릉이 실시간 수요 예측 및 재배치 우선순위 대시보드';
 
   /// 강남구 행정동 (필터용)
   static const List<String> districtOptions = [
@@ -100,16 +106,21 @@ class AdminPageController extends GetxController {
         sortBy: sortBy.value,
         sortOrder: sortOrder.value,
       );
+      serviceMode.value = res.serviceMode;
+      listMode.value = res.listMode;
       items.value = res.items;
       exceptions.value = res.exceptions;
       summary.value = res.summary;
       debugPrint(
-          '[DDRI] 관리자 목록: total=${res.summary.totalCount}, risk=${res.summary.riskCount}');
+        '[DDRI] 관리자 목록: total=${res.summary.totalCount}, risk=${res.summary.riskCount}',
+      );
     } catch (e) {
       errorMessage.value = '재배치 목록을 불러오지 못했습니다.';
       items.clear();
       exceptions.clear();
       summary.value = null;
+      serviceMode.value = 'beta';
+      listMode.value = '';
     } finally {
       isLoading.value = false;
     }
