@@ -6,7 +6,11 @@ DDRI MySQL 스키마를 DBML 형식으로 정의한다.
 
 | 파일 | 설명 |
 |------|------|
-| mysql.dbml | ddri_db 테이블 정의 (stations, station_api_mappings 등) |
+| mysql.dbml | ddri_db 테이블 정의 (prediction_logs) |
+
+## 기준
+
+- `fastapi/mysql/init_schema.sql` — 실제 MySQL DDL
 
 ## 사용법
 
@@ -15,6 +19,5 @@ DDRI MySQL 스키마를 DBML 형식으로 정의한다.
 
 ## 참조
 
-- `fastapi/mysql/init_schema.sql` — 실제 MySQL DDL
 - `docs/02_web_service_final/04_ddri_database_design.md` — 테이블 설계
 - `docs/ERD/ERD.mmd` — Mermaid ERD

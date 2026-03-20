@@ -31,11 +31,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message: { type: string }
-                  status: { type: string }
-                  version: { type: string }
+                $ref: "#/components/schemas/RootResponse"
 
   /health:
     get:
@@ -47,16 +43,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status: { type: string }
-                  message: { type: string }
+                $ref: "#/components/schemas/HealthResponse"
 
   /v1/user/stations/nearby:
     get:
       tags: [ddri-user]
-      summary: 근처 대여소 조회
-      description: 위치 기준 주변 대여소와 화면용 날씨 정보를 함께 반환할 수 있다.
+      summary: 사용자 위치 기준 스테이션 조회
+      description: 베타 기간에는 고정 6개 스테이션을 거리순으로 재정렬해 반환한다.
       parameters:
         - name: lat
           in: query
@@ -97,11 +90,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NearbyStationsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /v1/admin/stations/risk:
     get:
       tags: [ddri-admin]
-      summary: 관리자 위험 대여소 조회
+      summary: 관리자 위험도 목록 조회
+      description: 베타 기간에는 고정 6개 스테이션 기준 위험도 목록을 반환한다.
       parameters:
         - name: base_datetime
           in: query
@@ -148,11 +144,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RiskStationsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /v1/stations:
     get:
       tags: [ddri-stations]
-      summary: 스테이션 기본 정보 조회
+      summary: 스테이션 마스터 목록 조회
+      description: 베타 기간에는 동일한 6개 스테이션만 반환한다.
       parameters:
         - name: district_name
           in: query
@@ -171,12 +170,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StationsListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /v1/weather/direct:
     get:
       tags: [weather]
       summary: 주간 날씨 조회
-      description: Open-Meteo에서 오늘 포함 7일 일별 예보를 조회한다.
+      description: Open-Meteo에서 일별 예보 배열을 조회한다.
       parameters:
         - name: lat
           in: query
@@ -210,8 +211,8 @@ paths:
   /v1/weather/direct/single:
     get:
       tags: [weather]
-      summary: 특정 날짜 날씨 조회
-      description: 선택 날짜 또는 기준 시각의 상세 날씨를 조회한다. 과거 날짜는 허용하지 않으며 현재 시점부터 7일 이내 사용을 권장한다.
+      summary: 특정 시각 날씨 조회
+      description: 선택 날짜 또는 기준 시각에 가장 가까운 상세 날씨 1건을 조회한다.
       parameters:
         - name: lat
           in: query
@@ -225,6 +226,12 @@ paths:
           schema:
             type: number
             example: 126.978
+        - name: target_datetime
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "2026-03-20T18:00:00+09:00"
         - name: target_date
           in: query
           required: false
@@ -244,106 +251,144 @@ paths:
 
 components:
   schemas:
+    RootResponse:
+      type: object
+      required: [message, status, version, service_mode, endpoints]
+      properties:
+        message:
+          type: string
+          example: DDRI API
+        status:
+          type: string
+          example: running
+        version:
+          type: string
+          example: "1.0.0"
+        service_mode:
+          type: string
+          enum: [beta, live]
+        endpoints:
+          type: object
+          properties:
+            health:
+              type: string
+              example: /health
+            docs:
+              type: string
+              example: /docs
+            redoc:
+              type: string
+              example: /redoc
+
+    HealthResponse:
+      type: object
+      required: [status, message, service_mode]
+      properties:
+        status:
+          type: string
+          example: healthy
+        message:
+          type: string
+          example: API is running
+        service_mode:
+          type: string
+          enum: [beta, live]
+
     NearbyStationsResponse:
       type: object
+      required: [target_datetime, service_mode, list_mode, user_location, weather, items, exceptions]
       properties:
         target_datetime:
           type: string
+          example: "2026-03-20T18:00:00+09:00"
+        service_mode:
+          type: string
+          enum: [beta, live]
+        list_mode:
+          type: string
+          example: beta_fixed_6
         user_location:
           type: object
           properties:
-            lat: { type: number }
-            lng: { type: number }
+            lat:
+              type: number
+            lng:
+              type: number
         weather:
           $ref: "#/components/schemas/WeatherBundle"
         items:
           type: array
           items:
-            $ref: "#/components/schemas/StationNearbyItem"
+            $ref: "#/components/schemas/UserStationItem"
         exceptions:
           type: array
           items:
-            $ref: "#/components/schemas/ExceptionItem"
+            $ref: "#/components/schemas/PublicExceptionItem"
 
     RiskStationsResponse:
       type: object
+      required: [base_datetime, service_mode, list_mode, weather, summary, items, exceptions]
       properties:
         base_datetime:
           type: string
+          example: "2026-03-20T18:00:00+09:00"
+        service_mode:
+          type: string
+          enum: [beta, live]
+        list_mode:
+          type: string
+          example: beta_fixed_6
         weather:
           $ref: "#/components/schemas/WeatherBundle"
         summary:
-          $ref: "#/components/schemas/RiskSummary"
+          $ref: "#/components/schemas/AdminSummary"
         items:
           type: array
           items:
-            $ref: "#/components/schemas/StationRiskItem"
+            $ref: "#/components/schemas/AdminStationItem"
         exceptions:
           type: array
           items:
-            $ref: "#/components/schemas/ExceptionItem"
-
-    RiskSummary:
-      type: object
-      properties:
-        total_count: { type: integer }
-        risk_count: { type: integer }
-        exception_count: { type: integer }
-        avg_risk_score: { type: number }
-
-    StationNearbyItem:
-      type: object
-      properties:
-        station_id: { type: integer }
-        station_name: { type: string }
-        address: { type: string }
-        latitude: { type: number }
-        longitude: { type: number }
-        distance_m: { type: number }
-        current_bike_stock: { type: number }
-        predicted_rental_count: { type: number }
-        predicted_remaining_bikes: { type: number }
-        bike_availability_flag: { type: boolean }
-        availability_level:
-          type: string
-          enum: [sufficient, normal, low]
-        operational_status: { type: string }
-
-    StationRiskItem:
-      type: object
-      properties:
-        station_id: { type: integer }
-        station_name: { type: string }
-        district_name: { type: string }
-        cluster_code: { type: string }
-        current_bike_stock: { type: number }
-        predicted_demand: { type: number }
-        stock_gap: { type: number }
-        risk_score: { type: number }
-        reallocation_priority: { type: integer }
-        operational_status: { type: string }
+            $ref: "#/components/schemas/PublicExceptionItem"
 
     StationsListResponse:
       type: object
+      required: [service_mode, list_mode, items, total_count]
       properties:
+        service_mode:
+          type: string
+          enum: [beta, live]
+        list_mode:
+          type: string
+          example: beta_fixed_6
         items:
           type: array
           items:
             $ref: "#/components/schemas/StationMasterItem"
-        total_count: { type: integer }
+        total_count:
+          type: integer
+          example: 6
 
-    StationMasterItem:
+    WeatherForecastResponse:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeatherDailyItem"
+
+    WeatherSingleResponse:
       type: object
       properties:
-        station_id: { type: integer }
-        api_station_id: { type: string }
-        station_name: { type: string }
-        district_name: { type: string }
-        address: { type: string }
-        latitude: { type: number }
-        longitude: { type: number }
-        cluster_code: { type: string }
-        operational_status: { type: string }
+        result:
+          oneOf:
+            - $ref: "#/components/schemas/WeatherSingleItem"
+            - type: string
+              example: Error
+        errorMsg:
+          type: string
+          nullable: true
 
     WeatherBundle:
       type: object
@@ -351,49 +396,173 @@ components:
         weekly_forecast:
           type: array
           items:
-            $ref: "#/components/schemas/WeatherDayItem"
+            $ref: "#/components/schemas/WeatherForecastListItem"
         selected_forecast:
-          $ref: "#/components/schemas/WeatherDayItem"
+          $ref: "#/components/schemas/WeatherForecastListItem"
 
-    WeatherForecastResponse:
+    WeatherForecastListItem:
       type: object
       properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/WeatherDayItem"
+        weather_datetime:
+          type: string
+        weather_type:
+          type: string
+        weather_low:
+          type: number
+        weather_high:
+          type: number
+        icon_url:
+          type: string
 
-    WeatherSingleResponse:
+    WeatherDailyItem:
       type: object
       properties:
-        result:
-          $ref: "#/components/schemas/WeatherDayItem"
+        weather_datetime:
+          type: string
+        weather_type:
+          type: string
+        weather_low:
+          type: number
+        weather_high:
+          type: number
+        precipitation_probability_max:
+          type: number
+        icon_url:
+          type: string
 
-    WeatherDayItem:
+    WeatherSingleItem:
       type: object
       properties:
-        weather_datetime: { type: string }
-        weather_type: { type: string }
-        weather_low: { type: number }
-        weather_high: { type: number }
-        icon_url: { type: string }
+        weather_datetime:
+          type: string
+        weather_type:
+          type: string
+        weather_low:
+          type: number
+        weather_high:
+          type: number
+        temperature:
+          type: number
+        precipitation_probability:
+          type: number
+        icon_url:
+          type: string
 
-    ExceptionItem:
+    UserStationItem:
       type: object
       properties:
-        station_id: { type: integer }
-        reason: { type: string }
+        station_id:
+          type: integer
+        station_name:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        distance_m:
+          type: integer
+        current_bike_stock:
+          type: integer
+        predicted_rental_count:
+          type: number
+        predicted_remaining_bikes:
+          type: number
+        bike_availability_flag:
+          type: boolean
+        availability_level:
+          type: string
+        operational_status:
+          type: string
+        service_tag:
+          type: string
+
+    AdminSummary:
+      type: object
+      properties:
+        total_count:
+          type: integer
+        risk_count:
+          type: integer
+        exception_count:
+          type: integer
+        avg_risk_score:
+          type: number
+
+    AdminStationItem:
+      type: object
+      properties:
+        station_id:
+          type: integer
+        station_name:
+          type: string
+        district_name:
+          type: string
+        cluster_code:
+          type: string
+        current_bike_stock:
+          type: integer
+        predicted_demand:
+          type: number
+        stock_gap:
+          type: number
+        risk_score:
+          type: number
+        reallocation_priority:
+          type: integer
+        operational_status:
+          type: string
+        service_tag:
+          type: string
+
+    StationMasterItem:
+      type: object
+      properties:
+        station_id:
+          type: integer
+        api_station_id:
+          type: string
+        station_name:
+          type: string
+        district_name:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        cluster_code:
+          type: string
+        operational_status:
+          type: string
+        service_tag:
+          type: string
+
+    PublicExceptionItem:
+      type: object
+      properties:
+        reason:
+          type: string
+          example: 데이터 준비 중
+        count:
+          type: integer
+          example: 3
 
     ErrorResponse:
       type: object
       properties:
-        result: { type: string, example: "Error" }
-        errorMsg: { type: string }
-        traceback: { type: string }
+        detail:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: object
 
   responses:
     BadRequest:
-      description: 파라미터 오류
+      description: 잘못된 요청
       content:
         application/json:
           schema:

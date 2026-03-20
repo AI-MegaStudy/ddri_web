@@ -1,13 +1,16 @@
+%% DDRI Minimal ERD - Mermaid
+%% 기준: fastapi/mysql/init_schema.sql
+
 erDiagram
-    prediction_logs {
-        bigint id PK
-        datetime prediction_time
-        datetime target_time
-        int station_id
-        int horizon_hours
-        decimal predicted_stock
-        decimal predicted_net_change
-        string model_version
-        datetime source_updated_at
-        datetime created_at
+    prediction_logs["prediction_logs · 예측 로그"] {
+        bigint id PK "id · 식별자"
+        datetime prediction_time "prediction_time · 예측 실행 시각"
+        datetime target_time "target_time · 예측 대상 시각"
+        int station_id "station_id · 숫자형 대여소 ID"
+        int horizon_hours "horizon_hours · 예측 시간 간격"
+        decimal predicted_stock "predicted_stock · 예상 재고"
+        decimal predicted_net_change "predicted_net_change · 예상 누적 순변화"
+        varchar model_version "model_version · 모델 버전"
+        datetime source_updated_at "source_updated_at · 실시간 재고 또는 외부 원천 기준 시각"
+        datetime created_at "created_at · 레코드 생성 시각"
     }

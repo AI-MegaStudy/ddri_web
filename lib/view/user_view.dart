@@ -53,6 +53,7 @@ class UserView extends StatelessWidget {
         builder: (context, constraints) {
           final padding = _pagePadding(constraints.maxWidth);
           final width = constraints.maxWidth;
+          final height = constraints.maxHeight;
           final orientation = MediaQuery.orientationOf(context);
           final useSideLayout = _useSideLayout(width, orientation);
 
@@ -62,16 +63,7 @@ class UserView extends StatelessWidget {
               child: Padding(
                 padding: padding,
                 child: useSideLayout
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const UserSearchArea(),
-                          const UserWeatherSection(),
-                          Expanded(
-                            child: _SideLayout(width: width),
-                          ),
-                        ],
-                      )
+                    ? _AdaptiveSideLayout(width: width, viewportHeight: height)
                     : _ScrollableStackLayout(
                         viewportHeight: constraints.maxHeight,
                       ),
@@ -79,6 +71,52 @@ class UserView extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AdaptiveSideLayout extends StatelessWidget {
+  const _AdaptiveSideLayout({
+    required this.width,
+    required this.viewportHeight,
+  });
+
+  final double width;
+  final double viewportHeight;
+
+  static const double _minFixedHeightForPinnedLayout = 860;
+  static const double _minScrollableSidePanelHeight = 360;
+
+  @override
+  Widget build(BuildContext context) {
+    if (viewportHeight >= _minFixedHeightForPinnedLayout) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const UserSearchArea(),
+          const UserWeatherSection(),
+          Expanded(child: _SideLayout(width: width)),
+        ],
+      );
+    }
+
+    final sidePanelHeight = (viewportHeight * 0.58).clamp(
+      _minScrollableSidePanelHeight,
+      640.0,
+    );
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const UserSearchArea(),
+          const UserWeatherSection(),
+          SizedBox(
+            height: sidePanelHeight,
+            child: _SideLayout(width: width),
+          ),
+        ],
       ),
     );
   }
@@ -101,7 +139,10 @@ class _SideLayout extends StatelessWidget {
       children: [
         Expanded(flex: mapFlex, child: const UserMapSection()),
         const VerticalDivider(width: 1),
-        Expanded(flex: listFlex, child: const UserStationList(sideLayout: true)),
+        Expanded(
+          flex: listFlex,
+          child: const UserStationList(sideLayout: true),
+        ),
       ],
     );
   }
@@ -115,8 +156,10 @@ class _ScrollableStackLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mapHeight = (viewportHeight * 0.42)
-        .clamp(DesignToken.userMapMinHeight, DesignToken.userMapMaxHeight);
+    final mapHeight = (viewportHeight * 0.42).clamp(
+      DesignToken.userMapMinHeight,
+      DesignToken.userMapMaxHeight,
+    );
 
     return SingleChildScrollView(
       child: Column(
@@ -124,10 +167,7 @@ class _ScrollableStackLayout extends StatelessWidget {
         children: [
           const UserSearchArea(),
           const UserWeatherSection(),
-          SizedBox(
-            height: mapHeight,
-            child: const UserMapSection(),
-          ),
+          SizedBox(height: mapHeight, child: const UserMapSection()),
           const Divider(height: 1),
           const UserStationList(sideLayout: false),
         ],

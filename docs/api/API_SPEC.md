@@ -1,63 +1,51 @@
 # DDRI API 명세서
 
 작성일: 2026-03-20  
-목적: 현재 DDRI 웹서비스에서 사용하는 조회형 API를 화면 기준으로 정리한다.
+갱신일: 2026-03-20  
+목적: 현재 `ddri_web`에서 실제 사용 중인 조회형 API를 화면 기준으로 정리한다.
 
 ## 문서 기준
 
 - API 버전: `v1`
 - 인증: 없음
 - 응답 형식: JSON
-- 서비스 성격: 비로그인 모니터링 웹
+- 서비스 성격: 비로그인 공개 조회 웹
+- 현재 기본 모드: `DDRI_SERVICE_MODE=beta`
+- 문서 기준 구현 위치:
+  - `fastapi/app/main.py`
+  - `fastapi/app/api/ddri_user.py`
+  - `fastapi/app/api/ddri_admin.py`
+  - `fastapi/app/api/ddri_stations.py`
+  - `fastapi/app/api/weather.py`
 
-현재 기준 설계 문서:
+## 공통 원칙
 
-- [01_screen_design_and_scope.md](/Users/cheng80/Desktop/ddri_web/docs/02_web_service_final/01_screen_design_and_scope.md)
-- [02_system_design.md](/Users/cheng80/Desktop/ddri_web/docs/02_web_service_final/02_system_design.md)
-- [03_api_and_runtime_contract.md](/Users/cheng80/Desktop/ddri_web/docs/02_web_service_final/03_api_and_runtime_contract.md)
+- 사용자/관리자/스테이션 API는 베타 기간 동안 동일한 고정 6개 스테이션을 기준으로 응답한다.
+- 응답에는 `service_mode`, `list_mode` 같은 운영 상태 필드를 포함할 수 있다.
+- 화면 바인딩용 응답만 외부에 노출하고 모델 내부 피처 전체는 반환하지 않는다.
+- 예외 상황에서도 raw exception, stack trace, SQL, 내부 파일 경로 같은 문자열은 외부 응답에 포함하지 않는다.
+- 날씨는 화면 표시용 정보와 추후 모델 입력용 참조를 함께 고려한 구조로 유지한다.
 
 ## 1. API 목록
-
-### 기본
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/` | API 정보 |
 | GET | `/health` | 헬스 체크 |
-
-### 사용자 페이지
-
-| 메서드 | 경로 | 설명 |
-|--------|------|------|
-| GET | `/v1/user/stations/nearby` | 위치 기준 주변 대여소 조회 |
-
-### 관리자 페이지
-
-| 메서드 | 경로 | 설명 |
-|--------|------|------|
-| GET | `/v1/admin/stations/risk` | 기준 시각 부족 위험 목록 조회 |
-
-### 스테이션 마스터
-
-| 메서드 | 경로 | 설명 |
-|--------|------|------|
-| GET | `/v1/stations` | 화면용 스테이션 기본 정보 조회 |
-
-### 날씨
-
-| 메서드 | 경로 | 설명 |
-|--------|------|------|
-| GET | `/v1/weather/direct` | 7일 일별 날씨 조회 |
-| GET | `/v1/weather/direct/single` | 특정 날짜 또는 시각 기준 날씨 조회 |
+| GET | `/v1/user/stations/nearby` | 사용자 위치 기준 스테이션 조회 |
+| GET | `/v1/admin/stations/risk` | 관리자 위험도 목록 조회 |
+| GET | `/v1/stations` | 스테이션 마스터 목록 조회 |
+| GET | `/v1/weather/direct` | 일별 날씨 목록 조회 |
+| GET | `/v1/weather/direct/single` | 특정 시각 기준 날씨 1건 조회 |
 
 ## 2. 사용자 API
 
 ### `GET /v1/user/stations/nearby`
 
 용도:
-- 사용자 위치 또는 주소 위치 기준 대여소 조회
-- 현재 재고와 예측 결과 표시
-- 화면에서 주간 날씨와 선택 시각 예상 날씨를 함께 표시 가능
+- 사용자 페이지 `/user`의 메인 리스트와 지도 바인딩
+- 지정 위치 기준 거리순 스테이션 목록 조회
+- 선택 시각 기준 날씨와 주간 날씨를 함께 제공
 
 #### 요청 파라미터
 
@@ -65,15 +53,17 @@
 |----------|------|------|------|
 | `lat` | number | ✓ | 위도 |
 | `lng` | number | ✓ | 경도 |
-| `target_datetime` | string | ✓ | 조회 기준 시각, ISO 8601 |
-| `limit` | integer | | 반환 개수, 기본 20 |
-| `radius_m` | integer | | 반경(m) |
+| `target_datetime` | string | ✓ | ISO 8601 기준 시각 |
+| `limit` | integer | | 반환 개수, 기본 `20`, 최대 `50` |
+| `radius_m` | integer | | 반경(m), 현재 베타 응답에서는 정렬 보조 의미만 가짐 |
 
-#### 응답 예시
+#### 현재 응답 구조
 
 ```json
 {
   "target_datetime": "2026-03-20T18:00:00+09:00",
+  "service_mode": "beta",
+  "list_mode": "beta_fixed_6",
   "user_location": {
     "lat": 37.5012,
     "lng": 127.0396
@@ -81,126 +71,131 @@
   "weather": {
     "weekly_forecast": [
       {
-        "date": "2026-03-20",
+        "weather_datetime": "2026-03-20T00:00:00+09:00",
         "weather_type": "맑음",
-        "weather_low": 4,
-        "weather_high": 13,
-        "icon_url": "https://..."
+        "weather_low": 4.0,
+        "weather_high": 13.0,
+        "icon_url": "https://openweathermap.org/img/wn/01d@2x.png"
       }
     ],
     "selected_forecast": {
       "weather_datetime": "2026-03-20T18:00:00+09:00",
       "weather_type": "구름많음",
-      "weather_low": 6,
-      "weather_high": 14,
-      "icon_url": "https://..."
+      "weather_low": 6.0,
+      "weather_high": 14.0,
+      "icon_url": "https://openweathermap.org/img/wn/03d@2x.png"
     }
   },
   "items": [
     {
-      "station_id": 2328,
-      "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
-      "address": "서울 강남구 역삼동 123-45",
-      "latitude": 37.5001,
-      "longitude": 127.0389,
-      "distance_m": 150,
-      "current_bike_stock": 7,
-      "predicted_rental_count": 5.2,
-      "predicted_remaining_bikes": 1.8,
+      "station_id": 2348,
+      "station_name": "포스코사거리(기업은행) 베타",
+      "address": "서울 강남구 테헤란로 인근",
+      "latitude": 37.507,
+      "longitude": 127.056,
+      "distance_m": 210,
+      "current_bike_stock": 9,
+      "predicted_rental_count": 4.5,
+      "predicted_remaining_bikes": 4.5,
       "bike_availability_flag": true,
-      "availability_level": "low",
-      "operational_status": "operational"
+      "availability_level": "normal",
+      "operational_status": "operational",
+      "service_tag": "베타"
     }
   ],
-  "exceptions": [
-    {
-      "station_id": 2314,
-      "reason": "실시간 비노출"
-    }
-  ]
+  "exceptions": []
 }
 ```
 
-#### 응답 해석
+#### 메모
 
-- `weather.weekly_forecast`
-  - 기본으로 보여줄 주간 일별 날씨
-- `weather.selected_forecast`
-  - 사용자가 선택한 날짜/시간 기준 예상 날씨
-- `items`
-  - 거리순 대여소 목록
-- `exceptions`
-  - 실시간 비노출 등 예외 스테이션
+- 베타 모드에서는 실제 주변 전체 조회가 아니라 고정 6개를 거리순으로 재정렬해 반환한다.
+- `target_datetime` 형식 검증 실패 시 현재 구현은 `400`을 반환한다.
+- `exceptions`는 현재 베타 응답에서는 빈 배열이다.
 
 ## 3. 관리자 API
 
 ### `GET /v1/admin/stations/risk`
 
 용도:
-- 기준 시각에 부족 위험이 큰 대여소 목록 조회
-- 위험도 판단과 함께 주간 날씨, 기준 시각 날씨 확인
+- 관리자 페이지 `/admin`의 요약 카드, 표, 예외 섹션 바인딩
+- 기준 시각의 부족 위험 목록 조회
 
 #### 요청 파라미터
 
 | 파라미터 | 타입 | 필수 | 설명 |
 |----------|------|------|------|
-| `base_datetime` | string | ✓ | 기준 시각, ISO 8601 |
-| `urgent_only` | boolean | | 위험 대여소만 조회 |
+| `base_datetime` | string | ✓ | ISO 8601 기준 시각 |
+| `urgent_only` | boolean | | 위험 스테이션만 필터링 |
 | `district_name` | string | | 행정동 필터 |
-| `cluster_code` | string | | 보조 필터 |
-| `sort_by` | string | | `risk_score` \| `reallocation_priority` \| `stock_gap` |
-| `sort_order` | string | | `asc` \| `desc` |
+| `cluster_code` | string | | 지역 특성 필터 |
+| `sort_by` | string | | `risk_score`, `reallocation_priority`, `stock_gap` |
+| `sort_order` | string | | `asc`, `desc` |
 
-#### 응답 예시
+#### 현재 응답 구조
 
 ```json
 {
   "base_datetime": "2026-03-20T18:00:00+09:00",
+  "service_mode": "beta",
+  "list_mode": "beta_fixed_6",
   "weather": {
     "weekly_forecast": [
       {
-        "date": "2026-03-20",
+        "weather_datetime": "2026-03-20T00:00:00+09:00",
         "weather_type": "맑음",
-        "weather_low": 4,
-        "weather_high": 13,
-        "icon_url": "https://..."
+        "weather_low": 4.0,
+        "weather_high": 13.0,
+        "icon_url": "https://openweathermap.org/img/wn/01d@2x.png"
       }
     ],
     "selected_forecast": {
       "weather_datetime": "2026-03-20T18:00:00+09:00",
       "weather_type": "구름많음",
-      "weather_low": 6,
-      "weather_high": 14,
-      "icon_url": "https://..."
+      "weather_low": 6.0,
+      "weather_high": 14.0,
+      "icon_url": "https://openweathermap.org/img/wn/03d@2x.png"
     }
   },
   "summary": {
-    "total_count": 161,
-    "risk_count": 23,
-    "exception_count": 3,
-    "avg_risk_score": 0.42
+    "total_count": 6,
+    "risk_count": 3,
+    "exception_count": 0,
+    "avg_risk_score": 0.51
   },
   "items": [
     {
-      "station_id": 2328,
-      "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
+      "station_id": 2348,
+      "station_name": "포스코사거리(기업은행) 베타",
       "district_name": "역삼동",
       "cluster_code": "cluster00",
-      "current_bike_stock": 7,
-      "predicted_demand": 12.0,
-      "stock_gap": -5.0,
-      "risk_score": 0.72,
+      "current_bike_stock": 4,
+      "predicted_demand": 8.0,
+      "stock_gap": -4.0,
+      "risk_score": 0.76,
       "reallocation_priority": 1,
-      "operational_status": "operational"
+      "operational_status": "operational",
+      "service_tag": "베타"
     }
   ],
-  "exceptions": [
-    {
-      "station_id": 2314,
-      "reason": "실시간 비노출"
-    }
-  ]
+  "exceptions": []
 }
+```
+
+#### 메모
+
+- 베타 모드에서는 동일한 6개 스테이션만 사용한다.
+- `summary.exception_count`는 현재 베타 기준 `0`이다.
+- 예외 정보는 `station_id` 대신 집계형 항목으로만 노출한다.
+- `live` 모드 목업 응답의 예외 예시는 아래와 같다.
+
+```json
+[
+  {
+    "reason": "실시간 데이터가 일부 준비되지 않았습니다.",
+    "count": 3
+  }
+]
 ```
 
 ## 4. 스테이션 마스터 API
@@ -209,75 +204,112 @@
 
 용도:
 - 화면용 기본 스테이션 정보 조회
-- 로컬 선탑재 데이터와 비교 가능
+- 사용자/관리자 공용 마스터 목록 바인딩
 
 #### 요청 파라미터
 
 | 파라미터 | 타입 | 필수 | 설명 |
 |----------|------|------|------|
 | `district_name` | string | | 행정동 필터 |
-| `cluster_code` | string | | 군집 필터 |
+| `cluster_code` | string | | 지역 특성 필터 |
 
-#### 응답 예시
+#### 현재 응답 구조
 
 ```json
 {
+  "service_mode": "beta",
+  "list_mode": "beta_fixed_6",
   "items": [
     {
-      "station_id": 2328,
-      "api_station_id": "ST-1234",
-      "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
+      "station_id": 2348,
+      "api_station_id": "ST-2348",
+      "station_name": "포스코사거리(기업은행) 베타",
       "district_name": "역삼동",
-      "address": "서울 강남구 역삼동 123-45",
-      "latitude": 37.5001,
-      "longitude": 127.0389,
+      "address": "서울 강남구 테헤란로 인근",
+      "latitude": 37.507,
+      "longitude": 127.056,
       "cluster_code": "cluster00",
-      "operational_status": "operational"
+      "operational_status": "operational",
+      "service_tag": "베타"
     }
   ],
-  "total_count": 161
+  "total_count": 6
 }
 ```
+
+#### 메모
+
+- 베타 모드에서는 운영용 전체 마스터를 반환하지 않는다.
+- `live` 모드용 실제 마스터 원본 위치와 로딩 구조는 아직 확정되지 않았다.
 
 ## 5. 날씨 API
 
 ### `GET /v1/weather/direct`
 
 용도:
-- 오늘 포함 7일 일별 예보 조회
-- 사용자/관리자 탭의 주간 날씨 UI 구성
+- 일별 예보 배열 조회
+- 사용자/관리자 주간 날씨 UI 구성
+
+#### 요청 파라미터
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `lat` | number | ✓ | 위도 |
+| `lon` | number | ✓ | 경도 |
+| `start_date` | string | | `YYYY-MM-DD`, 없으면 오늘 포함 기본 범위 반환 |
+
+#### 응답 형태
+
+```json
+{
+  "results": [
+    {
+      "weather_datetime": "2026-03-20T00:00:00",
+      "weather_type": "맑음",
+      "weather_low": 4.0,
+      "weather_high": 13.0,
+      "precipitation_probability_max": 10,
+      "icon_url": "https://..."
+    }
+  ]
+}
+```
 
 ### `GET /v1/weather/direct/single`
 
 용도:
-- 선택 날짜 또는 기준 시각의 상세 날씨 조회
-- 화면의 선택 시간 상세 날씨 구성
+- 특정 시각에 가장 가까운 상세 날씨 1건 조회
+- 화면의 선택 시각 상세 날씨 UI 구성
 
-날짜 선택 원칙:
+#### 요청 파라미터
 
-- 과거 날짜 선택 불가
-- 현재 시점부터 7일 이내까지만 허용
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `lat` | number | ✓ | 위도 |
+| `lon` | number | ✓ | 경도 |
+| `target_datetime` | string | | ISO 8601 기준 시각 |
+| `target_date` | string | | 하위 호환용 `YYYY-MM-DD`, `target_datetime` 없을 때 사용 |
 
-## 6. 에러 응답 원칙
-
-예시:
+#### 응답 형태
 
 ```json
 {
-  "error": {
-    "code": "INVALID_PARAMETER",
-    "message": "lat, lng are required"
+  "result": {
+    "weather_datetime": "2026-03-20T18:00:00",
+    "weather_type": "구름많음",
+    "weather_low": 6.0,
+    "weather_high": 14.0,
+    "temperature": 12.1,
+    "precipitation_probability": 20,
+    "icon_url": "https://..."
   }
 }
 ```
 
-주요 원칙:
-- 필수 파라미터 누락 시 명확한 오류 반환
-- 일부 외부 데이터 실패 시 전체 실패보다 부분 응답 우선
-- 폴백이 발생하면 응답 상태 필드로 구분 가능
+## 6. 현재 미완료 항목
 
-## 7. 현재 메모
-
-- 현재 FastAPI는 목업 응답 기준으로 동작한다.
-- 실시간 재고 연동, 예측 런타임 연결, 로컬 마스터 로딩은 후속 작업이다.
-- DB는 필수 조건이 아니며, 필요 시 `prediction_logs`만 최소 저장한다.
+- 외부 실시간 재고 API 연동
+- 예측 모델 런타임 연결
+- `live` 모드용 실제 마스터 로딩 구조 확정
+- 입력 오류 문구와 예외 응답의 외부 노출 문구 일반화
+- 관리자 `exceptions` 구조의 보안형 응답 정리

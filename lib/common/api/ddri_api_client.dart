@@ -2,10 +2,9 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-
-import '../../utils/custom_common_util.dart';
 import 'package:http/http.dart' as http;
 
+import '../../utils/custom_common_util.dart';
 import 'models/station_models.dart';
 
 /// DDRI API 클라이언트.
@@ -25,9 +24,17 @@ class DdriApiClient {
     Map<String, String>? queryParams,
   }) async {
     final uri = Uri.parse('$_v1$path').replace(queryParameters: queryParams);
-    final response = await http.get(uri);
+    late final http.Response response;
+    try {
+      response = await http.get(uri);
+    } catch (_) {
+      throw ApiException.network();
+    }
     if (response.statusCode >= 400) {
-      throw ApiException(response.statusCode, response.body);
+      throw ApiException.fromHttpResponse(
+        statusCode: response.statusCode,
+        body: response.body,
+      );
     }
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -80,7 +87,16 @@ class DdriApiClient {
     }
 
     final json = await _get('/admin/stations/risk', queryParams: params);
-    return RiskStationsResponse.fromJson(json);
+    debugPrint(
+      '[DDRI] 관리자 API 응답 수신: items=${(json['items'] as List<dynamic>?)?.length ?? 0}, '
+      'weather=${json['weather'] != null}, summary=${json['summary'] != null}',
+    );
+    final res = RiskStationsResponse.fromJson(json);
+    debugPrint(
+      '[DDRI] 관리자 API 파싱 완료: items=${res.items.length}, '
+      'weekly=${res.weather.weeklyForecast.length}, focused-ready=${res.items.isNotEmpty}',
+    );
+    return res;
   }
 
   /// 스테이션 마스터 조회
@@ -136,11 +152,48 @@ class DdriApiClient {
 
 /// API 예외. HTTP 4xx/5xx 응답 시 발생.
 class ApiException implements Exception {
-  ApiException(this.statusCode, this.body);
+  ApiException(this.statusCode, this.message, {this.isNetworkError = false});
+
+  factory ApiException.network() {
+    return ApiException(
+      0,
+      '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+      isNetworkError: true,
+    );
+  }
+
+  factory ApiException.fromHttpResponse({
+    required int statusCode,
+    required String body,
+  }) {
+    String message = '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+
+    try {
+      final json = jsonDecode(body);
+      if (json is Map<String, dynamic>) {
+        final detail = json['detail'];
+        if (detail is String && detail.trim().isNotEmpty) {
+          message = detail.trim();
+        } else {
+          final errorMsg = json['errorMsg'];
+          if (errorMsg is String && errorMsg.trim().isNotEmpty) {
+            message = errorMsg.trim();
+          }
+        }
+      }
+    } catch (_) {
+      // Keep the generic safe message when the body is not valid JSON.
+    }
+
+    return ApiException(statusCode, message);
+  }
+
   final int statusCode;
-  final String body;
+  final String message;
+  final bool isNetworkError;
+
   @override
-  String toString() => 'ApiException($statusCode): $body';
+  String toString() => 'ApiException($statusCode): $message';
 }
 
 /// 근처 대여소 응답 (GET /v1/user/stations/nearby)
@@ -150,6 +203,7 @@ class NearbyStationsResponse {
     required this.serviceMode,
     required this.listMode,
     required this.userLocation,
+    required this.weather,
     required this.items,
     required this.exceptions,
   });
@@ -158,6 +212,7 @@ class NearbyStationsResponse {
   final String serviceMode;
   final String listMode;
   final UserLocation userLocation;
+  final WeatherBundle weather;
   final List<StationNearbyItem> items;
   final List<ExceptionItem> exceptions;
 
@@ -168,6 +223,9 @@ class NearbyStationsResponse {
       listMode: json['list_mode'] as String? ?? '',
       userLocation: UserLocation.fromJson(
         json['user_location'] as Map<String, dynamic>? ?? {},
+      ),
+      weather: WeatherBundle.fromJson(
+        json['weather'] as Map<String, dynamic>? ?? {},
       ),
       items:
           (json['items'] as List<dynamic>?)
@@ -198,12 +256,12 @@ class UserLocation {
 
 /// 예외 스테이션 (실시간 비노출 등)
 class ExceptionItem {
-  const ExceptionItem({required this.stationId, required this.reason});
-  final int stationId;
+  const ExceptionItem({required this.reason, required this.count});
   final String reason;
+  final int count;
   factory ExceptionItem.fromJson(Map<String, dynamic> json) => ExceptionItem(
-    stationId: json['station_id'] as int? ?? 0,
     reason: json['reason'] as String? ?? '',
+    count: json['count'] as int? ?? 1,
   );
 }
 
@@ -213,6 +271,7 @@ class RiskStationsResponse {
     required this.baseDatetime,
     required this.serviceMode,
     required this.listMode,
+    required this.weather,
     required this.summary,
     required this.items,
     required this.exceptions,
@@ -221,6 +280,7 @@ class RiskStationsResponse {
   final String baseDatetime;
   final String serviceMode;
   final String listMode;
+  final WeatherBundle weather;
   final RiskSummary summary;
   final List<StationRiskItem> items;
   final List<ExceptionItem> exceptions;
@@ -230,6 +290,9 @@ class RiskStationsResponse {
       baseDatetime: json['base_datetime'] as String? ?? '',
       serviceMode: json['service_mode'] as String? ?? 'beta',
       listMode: json['list_mode'] as String? ?? '',
+      weather: WeatherBundle.fromJson(
+        json['weather'] as Map<String, dynamic>? ?? {},
+      ),
       summary: RiskSummary.fromJson(
         json['summary'] as Map<String, dynamic>? ?? {},
       ),
@@ -243,6 +306,30 @@ class RiskStationsResponse {
               ?.map((e) => ExceptionItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+    );
+  }
+}
+
+class WeatherBundle {
+  const WeatherBundle({
+    required this.weeklyForecast,
+    required this.selectedForecast,
+  });
+
+  final List<WeatherDayItem> weeklyForecast;
+  final WeatherDayItem? selectedForecast;
+
+  factory WeatherBundle.fromJson(Map<String, dynamic> json) {
+    final selected = json['selected_forecast'];
+    return WeatherBundle(
+      weeklyForecast:
+          (json['weekly_forecast'] as List<dynamic>?)
+              ?.map((e) => WeatherDayItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      selectedForecast: selected is Map<String, dynamic>
+          ? WeatherDayItem.fromJson(selected)
+          : null,
     );
   }
 }

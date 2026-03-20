@@ -1,11 +1,11 @@
-// DDRI 예외 스테이션: 실시간 비노출 ID 목록, 접이식
+// DDRI 예외 데이터 안내: 내부 식별자 없이 집계형 문구만 노출
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/design_token.dart';
 import '../../vm/admin_page_controller.dart';
 
-/// 예외 스테이션 접이식 영역. exceptions 비어있으면 숨김.
+/// 예외 데이터 접이식 영역. 내부 station_id는 화면에 노출하지 않는다.
 class AdminExceptionsSection extends StatelessWidget {
   const AdminExceptionsSection({super.key});
 
@@ -16,7 +16,13 @@ class AdminExceptionsSection extends StatelessWidget {
     return Obx(() {
       if (ctrl.exceptions.isEmpty) return const SizedBox.shrink();
 
-      final ids = ctrl.exceptions.map((e) => e.stationId).join(', ');
+      final totalCount = ctrl.exceptions.fold<int>(
+        0,
+        (sum, item) => sum + item.count,
+      );
+      final summaryText = ctrl.exceptions
+          .map((e) => e.count > 1 ? '${e.reason} ${e.count}건' : e.reason)
+          .join(' · ');
 
       return Container(
         decoration: BoxDecoration(
@@ -50,7 +56,7 @@ class AdminExceptionsSection extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '예외 스테이션: station_id $ids - 실시간 비노출',
+                          '예외 데이터 $totalCount건이 운영 집계에서 제외되었습니다.',
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(
                                 color: Colors.orange.shade800,
@@ -79,8 +85,9 @@ class AdminExceptionsSection extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: Text(
-                      '해당 스테이션들은 현재 공사 또는 일시 폐쇄 상태로 인해 자동 재배치 알고리즘에서 제외되었습니다. '
-                      '현장 확인 후 노출 상태를 변경하시기 바랍니다. 관리자에게만 노출되는 정보입니다.',
+                      '$summaryText\n\n'
+                      '세부 대여소 식별자는 화면에 노출하지 않으며, 운영 점검이 필요한 항목 수만 안내합니다. '
+                      '원인 확인은 서버 로그와 내부 운영 도구에서 진행합니다.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(0xFF64748B),
                         height: 1.5,

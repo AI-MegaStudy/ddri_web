@@ -15,6 +15,9 @@ class AdminStationList extends StatelessWidget {
     final ctrl = Get.find<AdminPageController>();
 
     return Obx(() {
+      debugPrint(
+        '[DDRI] AdminStationList build: ctrl=${ctrl.hashCode}, loading=${ctrl.isLoading.value}, items=${ctrl.items.length}',
+      );
       if (ctrl.isLoading.value && ctrl.items.isEmpty) {
         return Center(
           child: Column(
@@ -56,50 +59,286 @@ class AdminStationList extends StatelessWidget {
       final useShrinkWrap =
           ctrl.items.length <= DesignToken.adminListShrinkWrapThreshold;
 
-      final table = SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 860),
-          child: Column(
-            children: [
-              const _StationHeaderRow(),
-              ...ctrl.items.map(_StationDataRow.new),
-            ],
-          ),
-        ),
-      );
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final useCardLayout = constraints.maxWidth < 920;
+          if (useCardLayout) {
+            return Column(
+              children: [
+                if (ctrl.isLoading.value)
+                  const LinearProgressIndicator(minHeight: 2),
+                ...ctrl.items.map(_StationMobileCard.new),
+              ],
+            );
+          }
 
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: DesignToken.primary.withValues(alpha: 0.10),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
+          final table = SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 860),
+              child: Column(
+                children: [
+                  const _StationHeaderRow(),
+                  ...ctrl.items.map(_StationDataRow.new),
+                ],
+              ),
             ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (ctrl.isLoading.value)
-              const LinearProgressIndicator(minHeight: 2),
-            useShrinkWrap
-                ? table
-                : SizedBox(
-                    height: DesignToken.adminListMaxHeight,
-                    child: SingleChildScrollView(child: table),
-                  ),
-          ],
+          );
+
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: DesignToken.primary.withValues(alpha: 0.10),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (ctrl.isLoading.value)
+                  const LinearProgressIndicator(minHeight: 2),
+                useShrinkWrap
+                    ? table
+                    : SizedBox(
+                        height: DesignToken.adminListMaxHeight,
+                        child: SingleChildScrollView(child: table),
+                      ),
+              ],
+            ),
+          );
+        },
+      );
+    });
+  }
+}
+
+class _StationMobileCard extends StatelessWidget {
+  const _StationMobileCard(this.station);
+
+  final StationRiskItem station;
+
+  Color get _riskColor {
+    if (station.riskScore >= 0.75) return const Color(0xFFEF4444);
+    if (station.riskScore >= 0.5) return const Color(0xFFF97316);
+    return DesignToken.primary;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = Get.find<AdminPageController>();
+    final gapColor = station.stockGap < 0
+        ? const Color(0xFFEF4444)
+        : const Color(0xFF0F172A);
+
+    return Obx(() {
+      final isSelected =
+          ctrl.focusedStation.value?.stationId == station.stationId;
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => ctrl.focusStation(station),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? DesignToken.primary.withValues(alpha: 0.45)
+                    : DesignToken.primary.withValues(alpha: 0.10),
+                width: isSelected ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (station.serviceTag.isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF1D4ED8,
+                                ).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                station.serviceTag,
+                                style: const TextStyle(
+                                  color: Color(0xFF1D4ED8),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          Text(
+                            station.stationName,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            station.districtName,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: const Color(0xFF64748B),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _riskColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${station.reallocationPriority}',
+                        style: TextStyle(
+                          color: _riskColor,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        label: '재고',
+                        value: '${station.currentBikeStock}',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _MetricTile(
+                        label: '예측수요',
+                        value: station.predictedDemand.toStringAsFixed(1),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _MetricTile(
+                        label: '차이',
+                        value: station.stockGap.toStringAsFixed(1),
+                        valueColor: gapColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: station.riskScore.clamp(0, 1),
+                          minHeight: 10,
+                          backgroundColor: const Color(0xFFE2E8F0),
+                          valueColor: AlwaysStoppedAnimation<Color>(_riskColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '위험 ${station.riskScore.toStringAsFixed(1)}',
+                      style: TextStyle(
+                        color: _riskColor,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       );
     });
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: valueColor ?? const Color(0xFF0F172A),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -155,140 +394,162 @@ class _StationDataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ctrl = Get.find<AdminPageController>();
     final gapColor = station.stockGap < 0
         ? const Color(0xFFEF4444)
         : const Color(0xFF0F172A);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
-      ),
-      child: Row(
-        children: [
-          _Cell(
-            width: 300,
+    return Obx(() {
+      final isSelected =
+          ctrl.focusedStation.value?.stationId == station.stationId;
+      return Material(
+        color: isSelected
+            ? DesignToken.primary.withValues(alpha: 0.06)
+            : Colors.transparent,
+        child: InkWell(
+          onTap: () => ctrl.focusStation(station),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            decoration: BoxDecoration(
+              border: const Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              borderRadius: BorderRadius.circular(4),
+            ),
             child: Row(
               children: [
-                if (station.serviceTag.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                _Cell(
+                  width: 300,
+                  child: Row(
+                    children: [
+                      if (station.serviceTag.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF1D4ED8,
+                            ).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            station.serviceTag,
+                            style: const TextStyle(
+                              color: Color(0xFF1D4ED8),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      Expanded(
+                        child: Text(
+                          station.stationName,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF0F172A),
+                              ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _Cell(
+                  width: 120,
+                  child: Text(
+                    station.districtName,
+                    style: const TextStyle(color: Color(0xFF64748B)),
+                  ),
+                ),
+                _Cell(
+                  width: 90,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${station.currentBikeStock}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                _Cell(
+                  width: 110,
+                  alignment: Alignment.center,
+                  child: Text(
+                    station.predictedDemand.toStringAsFixed(1),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                _Cell(
+                  width: 90,
+                  alignment: Alignment.center,
+                  child: Text(
+                    station.stockGap.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: gapColor,
                     ),
+                  ),
+                ),
+                _Cell(
+                  width: 220,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: station.riskScore.clamp(0, 1),
+                            minHeight: 8,
+                            backgroundColor: const Color(0xFFE2E8F0),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _riskColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 36,
+                        child: Text(
+                          station.riskScore.toStringAsFixed(1),
+                          style: TextStyle(
+                            color: _riskColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _Cell(
+                  width: 100,
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1D4ED8).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
+                      color: _riskColor.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
                     ),
                     child: Text(
-                      station.serviceTag,
-                      style: const TextStyle(
-                        color: Color(0xFF1D4ED8),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
+                      '${station.reallocationPriority}',
+                      style: TextStyle(
+                        color: _riskColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(
-                  child: Text(
-                    station.stationName,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ),
               ],
             ),
           ),
-          _Cell(
-            width: 120,
-            child: Text(
-              station.districtName,
-              style: const TextStyle(color: Color(0xFF64748B)),
-            ),
-          ),
-          _Cell(
-            width: 90,
-            alignment: Alignment.center,
-            child: Text(
-              '${station.currentBikeStock}',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          _Cell(
-            width: 110,
-            alignment: Alignment.center,
-            child: Text(
-              station.predictedDemand.toStringAsFixed(1),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          _Cell(
-            width: 90,
-            alignment: Alignment.center,
-            child: Text(
-              station.stockGap.toStringAsFixed(1),
-              style: TextStyle(fontWeight: FontWeight.w800, color: gapColor),
-            ),
-          ),
-          _Cell(
-            width: 220,
-            child: Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: station.riskScore.clamp(0, 1),
-                      minHeight: 8,
-                      backgroundColor: const Color(0xFFE2E8F0),
-                      valueColor: AlwaysStoppedAnimation<Color>(_riskColor),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 36,
-                  child: Text(
-                    station.riskScore.toStringAsFixed(1),
-                    style: TextStyle(
-                      color: _riskColor,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _Cell(
-            width: 100,
-            alignment: Alignment.center,
-            child: Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _riskColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                '${station.reallocationPriority}',
-                style: TextStyle(
-                  color: _riskColor,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 }
 

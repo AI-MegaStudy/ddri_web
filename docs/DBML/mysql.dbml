@@ -1,22 +1,22 @@
 // DDRI Minimal MySQL Schema - DBML
-// 현재 기준: 선택적 prediction_logs 저장만 지원
+// 기준: fastapi/mysql/init_schema.sql
 
 Project ddri_db {
   database_type: 'MySQL'
-  Note: 'DDRI 모니터링 웹 최소 영속 스키마'
+  Note: 'ddri_db · DDRI 데이터베이스. 선택적 예측 로그 저장만 지원.'
 }
 
-Table prediction_logs {
-  id bigint [pk, increment]
-  prediction_time datetime [not null, note: '예측 실행 시각']
-  target_time datetime [not null, note: '예측 대상 시각']
-  station_id int [not null, note: '숫자형 대여소 ID']
-  horizon_hours int [not null, note: '예측 시간 간격']
-  predicted_stock decimal(10,2) [note: '예상 재고']
-  predicted_net_change decimal(10,2) [note: '예상 누적 순변화']
-  model_version varchar(64)
-  source_updated_at datetime [note: '실시간 재고 또는 외부 원천 기준 시각']
-  created_at datetime [default: `now()`]
+Table prediction_logs [note: 'prediction_logs · 예측 로그'] {
+  id bigint [pk, increment, note: 'id · 식별자']
+  prediction_time datetime [not null, note: 'prediction_time · 예측 실행 시각']
+  target_time datetime [not null, note: 'target_time · 예측 대상 시각']
+  station_id int [not null, note: 'station_id · 숫자형 대여소 ID']
+  horizon_hours int [not null, note: 'horizon_hours · 예측 시간 간격']
+  predicted_stock decimal(10,2) [note: 'predicted_stock · 예상 재고']
+  predicted_net_change decimal(10,2) [note: 'predicted_net_change · 예상 누적 순변화']
+  model_version varchar(64) [note: 'model_version · 모델 버전']
+  source_updated_at datetime [note: 'source_updated_at · 실시간 재고 또는 외부 원천 기준 시각']
+  created_at datetime [default: `CURRENT_TIMESTAMP`, note: 'created_at · 레코드 생성 시각']
 
   indexes {
     (station_id, target_time)

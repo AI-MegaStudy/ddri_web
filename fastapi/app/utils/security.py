@@ -7,6 +7,9 @@ import re
 from datetime import datetime
 from typing import Optional
 
+SAFE_BAD_REQUEST_MESSAGE = "요청 값을 다시 확인해 주세요."
+SAFE_WEATHER_ERROR_MESSAGE = "날씨 정보를 불러오지 못했습니다."
+
 
 # ─── 허용 값 화이트리스트 ─────────────────────────────
 SORT_BY_WHITELIST = frozenset({"risk_score", "reallocation_priority", "stock_gap"})
@@ -108,6 +111,16 @@ def sanitize_for_display(value: Optional[str], max_len: int = 200) -> str:
     # 제어문자·null 제거
     s = "".join(c for c in str(value)[:max_len] if ord(c) >= 32 and ord(c) != 127)
     return s.strip()
+
+
+def get_safe_bad_request_detail() -> str:
+    """외부 응답용 공통 400 메시지."""
+    return SAFE_BAD_REQUEST_MESSAGE
+
+
+def get_safe_weather_error_message() -> str:
+    """외부 응답용 공통 날씨 오류 메시지."""
+    return SAFE_WEATHER_ERROR_MESSAGE
 
 
 # ─── DB 연동 시 SQL 인젝션 방지 ─────────────────────

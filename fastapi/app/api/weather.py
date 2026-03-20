@@ -7,7 +7,12 @@ from fastapi import APIRouter, Query
 from typing import Optional
 from datetime import datetime
 
-from ..utils.security import validate_date_yyyy_mm_dd, validate_iso_datetime
+from ..utils.security import (
+    validate_date_yyyy_mm_dd,
+    validate_iso_datetime,
+    get_safe_bad_request_detail,
+    get_safe_weather_error_message,
+)
 from ..utils.weather_service import WeatherService
 
 router = APIRouter()
@@ -32,7 +37,7 @@ async def fetch_weather_direct(
         if start_date:
             validated = validate_date_yyyy_mm_dd(start_date)
             if not validated:
-                return {"result": "Error", "errorMsg": "날짜 형식이 올바르지 않습니다. (YYYY-MM-DD 형식 필요)"}
+                return {"result": "Error", "errorMsg": get_safe_bad_request_detail()}
             start_date_obj = datetime.strptime(validated, "%Y-%m-%d")
 
         weather_service = WeatherService()
@@ -61,10 +66,10 @@ async def fetch_weather_direct(
 
         return {"results": results}
 
-    except ValueError as e:
-        return {"result": "Error", "errorMsg": "입력값을 처리할 수 없습니다."}
+    except ValueError:
+        return {"result": "Error", "errorMsg": get_safe_bad_request_detail()}
     except Exception:
-        return {"result": "Error", "errorMsg": "날씨 조회 중 오류가 발생했습니다."}
+        return {"result": "Error", "errorMsg": get_safe_weather_error_message()}
 
 
 @router.get("/direct/single")
@@ -94,12 +99,12 @@ async def fetch_weather_direct_single(
         if target_datetime:
             validated = validate_iso_datetime(target_datetime)
             if not validated:
-                return {"result": "Error", "errorMsg": "날짜 형식이 올바르지 않습니다. (ISO datetime 형식 필요)"}
+                return {"result": "Error", "errorMsg": get_safe_bad_request_detail()}
             target_datetime_obj = datetime.fromisoformat(validated.replace("Z", "+00:00"))
         elif target_date:
             validated = validate_date_yyyy_mm_dd(target_date)
             if not validated:
-                return {"result": "Error", "errorMsg": "날짜 형식이 올바르지 않습니다. (YYYY-MM-DD 형식 필요)"}
+                return {"result": "Error", "errorMsg": get_safe_bad_request_detail()}
             target_datetime_obj = datetime.strptime(validated, "%Y-%m-%d").replace(hour=12)
 
         weather_service = WeatherService()
@@ -128,6 +133,6 @@ async def fetch_weather_direct_single(
         return {"result": result}
 
     except ValueError:
-        return {"result": "Error", "errorMsg": "입력값을 처리할 수 없습니다."}
+        return {"result": "Error", "errorMsg": get_safe_bad_request_detail()}
     except Exception:
-        return {"result": "Error", "errorMsg": "날씨 조회 중 오류가 발생했습니다."}
+        return {"result": "Error", "errorMsg": get_safe_weather_error_message()}

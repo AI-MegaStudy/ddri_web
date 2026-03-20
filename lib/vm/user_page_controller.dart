@@ -30,6 +30,7 @@ class UserPageController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isLoadingLocation = false.obs;
   final RxBool isLoadingWeather = false.obs;
+  final RxBool weatherExpanded = true.obs;
   final RxString errorMessage = ''.obs;
   final RxString weatherErrorMessage = ''.obs;
   final RxString serviceMode = 'beta'.obs;
@@ -111,19 +112,17 @@ class UserPageController extends GetxController {
       if (res.items.isNotEmpty && focusedStation.value == null) {
         focusedStation.value = res.items.first;
       }
+    } on ApiException catch (e, st) {
+      debugPrint('[DDRI] 대여소 목록 조회 실패: $e');
+      debugPrint('[DDRI] 스택: $st');
+      errorMessage.value = e.message;
+      items.clear();
+      serviceMode.value = 'beta';
+      listMode.value = '';
     } catch (e, st) {
       debugPrint('[DDRI] 대여소 목록 조회 실패: $e');
       debugPrint('[DDRI] 스택: $st');
-      final msg = e.toString().toLowerCase();
-      if (msg.contains('connection') ||
-          msg.contains('refused') ||
-          msg.contains('failed host lookup') ||
-          msg.contains('failed to fetch') ||
-          msg.contains('socket')) {
-        errorMessage.value = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
-      } else {
-        errorMessage.value = '대여소 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
-      }
+      errorMessage.value = '대여소 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
       items.clear();
       serviceMode.value = 'beta';
       listMode.value = '';
@@ -147,6 +146,12 @@ class UserPageController extends GetxController {
         lon: ln,
         targetDatetime: targetDatetimeIso,
       );
+    } on ApiException catch (e, st) {
+      debugPrint('[DDRI] 날씨 조회 실패: $e');
+      debugPrint('[DDRI] 스택: $st');
+      weeklyForecast.clear();
+      selectedForecast.value = null;
+      weatherErrorMessage.value = e.message;
     } catch (e, st) {
       debugPrint('[DDRI] 날씨 조회 실패: $e');
       debugPrint('[DDRI] 스택: $st');
@@ -159,6 +164,10 @@ class UserPageController extends GetxController {
   }
 
   Future<void> retryWeather() => _fetchWeather();
+
+  void toggleWeatherExpanded() {
+    weatherExpanded.value = !weatherExpanded.value;
+  }
 
   void focusStation(StationNearbyItem station) {
     focusedStation.value = station;

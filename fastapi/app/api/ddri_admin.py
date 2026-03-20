@@ -6,7 +6,9 @@ DDRI 관리자 페이지 API - 재배치 판단 목록 조회
 from fastapi import APIRouter, Query, HTTPException
 from typing import Optional
 
-from .beta_station_data import get_beta_admin_items
+from datetime import datetime
+
+from .beta_station_data import get_beta_admin_items, get_beta_weather_reference
 from ..core.runtime_config import get_service_mode, is_beta_mode
 from ..utils.security import (
     validate_sort_by,
@@ -14,9 +16,56 @@ from ..utils.security import (
     validate_district_name,
     validate_cluster_code,
     validate_iso_datetime,
+    get_safe_bad_request_detail,
 )
+from ..utils.weather_service import WeatherService
 
 router = APIRouter()
+
+
+def _build_weather_payload(base_datetime: str, district_name: str | None) -> dict:
+    """관리자 화면용 실제 날씨 응답을 구성한다."""
+    lat, lon = get_beta_weather_reference(district_name=district_name)
+    weather_service = WeatherService()
+
+    target_dt = datetime.fromisoformat(base_datetime.replace("Z", "+00:00"))
+    weekly = weather_service.fetch_daily_forecast(lat=lat, lon=lon)
+    selected = weather_service.fetch_single_datetime_weather(
+        lat=lat,
+        lon=lon,
+        target_datetime=target_dt,
+    )
+
+    weekly_forecast = [
+        {
+            "weather_datetime": forecast["weather_datetime"].isoformat()
+            if isinstance(forecast["weather_datetime"], datetime)
+            else str(forecast["weather_datetime"]),
+            "weather_type": forecast["weather_type"],
+            "weather_low": forecast["weather_low"],
+            "weather_high": forecast["weather_high"],
+            "precipitation_probability_max": forecast["precipitation_probability_max"],
+            "icon_url": forecast["icon_url"],
+        }
+        for forecast in weekly
+    ]
+
+    selected_forecast = {
+        "weather_datetime": selected["weather_datetime"].isoformat()
+        if isinstance(selected["weather_datetime"], datetime)
+        else str(selected["weather_datetime"]),
+        "weather_type": selected["weather_type"],
+        "weather_low": selected["weather_low"],
+        "weather_high": selected["weather_high"],
+        "temperature": selected["temperature"],
+        "precipitation_probability": selected["precipitation_probability"],
+        "icon_url": selected["icon_url"],
+    }
+
+    return {
+        "weekly_forecast": weekly_forecast,
+        "selected_forecast": selected_forecast,
+    }
 
 
 @router.get("/stations/risk")
@@ -40,7 +89,7 @@ async def get_stations_risk(
     # 인젝션 방지: 입력 검증
     base_dt = validate_iso_datetime(base_datetime)
     if not base_dt:
-        raise HTTPException(status_code=400, detail="base_datetime 형식이 올바르지 않습니다. (ISO 8601)")
+        raise HTTPException(status_code=400, detail=get_safe_bad_request_detail())
     district = validate_district_name(district_name)
     cluster = validate_cluster_code(cluster_code)
     sort_col = validate_sort_by(sort_by or "risk_score")
@@ -74,6 +123,8 @@ async def get_stations_risk(
                 "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
                 "district_name": "역삼동",
                 "cluster_code": "cluster00",
+                "latitude": 37.5001,
+                "longitude": 127.0389,
                 "current_bike_stock": 7,
                 "predicted_demand": 12.0,
                 "stock_gap": -5.0,
@@ -87,6 +138,8 @@ async def get_stations_risk(
                 "station_name": "강남역 2번출구 앞",
                 "district_name": "역삼동",
                 "cluster_code": "cluster01",
+                "latitude": 37.4985,
+                "longitude": 127.0276,
                 "current_bike_stock": 3,
                 "predicted_demand": 8.0,
                 "stock_gap": -5.0,
@@ -104,47 +157,25 @@ async def get_stations_risk(
         }
         list_mode = "live_risk"
 
+    try:
+        weather_payload = _build_weather_payload(
+            base_datetime=base_dt,
+            district_name=district,
+        )
+    except Exception:
+        weather_payload = {
+            "weekly_forecast": [],
+            "selected_forecast": None,
+        }
+
     return {
         "base_datetime": base_dt,
         "service_mode": service_mode,
         "list_mode": list_mode,
-        "weather": {
-            "weekly_forecast": [
-                {
-                    "weather_datetime": "2026-03-20T00:00:00+09:00",
-                    "weather_type": "맑음",
-                    "weather_low": 4.0,
-                    "weather_high": 13.0,
-                    "icon_url": "https://openweathermap.org/img/wn/01d@2x.png",
-                },
-                {
-                    "weather_datetime": "2026-03-21T00:00:00+09:00",
-                    "weather_type": "구름많음",
-                    "weather_low": 6.0,
-                    "weather_high": 14.0,
-                    "icon_url": "https://openweathermap.org/img/wn/03d@2x.png",
-                },
-                {
-                    "weather_datetime": "2026-03-22T00:00:00+09:00",
-                    "weather_type": "비",
-                    "weather_low": 7.0,
-                    "weather_high": 11.0,
-                    "icon_url": "https://openweathermap.org/img/wn/10d@2x.png",
-                },
-            ],
-            "selected_forecast": {
-                "weather_datetime": base_dt,
-                "weather_type": "구름많음",
-                "weather_low": 6.0,
-                "weather_high": 14.0,
-                "icon_url": "https://openweathermap.org/img/wn/03d@2x.png",
-            },
-        },
+        "weather": weather_payload,
         "summary": summary,
         "items": items,
         "exceptions": [] if is_beta_mode() else [
-            {"station_id": 2314, "reason": "실시간 비노출"},
-            {"station_id": 2323, "reason": "실시간 비노출"},
-            {"station_id": 3628, "reason": "실시간 비노출"},
+            {"reason": "실시간 데이터가 일부 준비되지 않았습니다.", "count": 3},
         ],
     }

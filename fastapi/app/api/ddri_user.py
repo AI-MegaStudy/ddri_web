@@ -8,7 +8,7 @@ from typing import Optional
 
 from .beta_station_data import get_beta_user_items
 from ..core.runtime_config import get_service_mode, is_beta_mode
-from ..utils.security import validate_iso_datetime
+from ..utils.security import validate_iso_datetime, get_safe_bad_request_detail
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ async def get_stations_nearby(
     # 인젝션 방지: target_datetime 검증
     target_dt = validate_iso_datetime(target_datetime)
     if not target_dt:
-        raise HTTPException(status_code=400, detail="target_datetime 형식이 올바르지 않습니다. (ISO 8601)")
+        raise HTTPException(status_code=400, detail=get_safe_bad_request_detail())
 
     service_mode = get_service_mode()
 

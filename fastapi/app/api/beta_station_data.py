@@ -194,6 +194,8 @@ def get_beta_admin_items(
             "station_name": station["station_name"],
             "district_name": station["district_name"],
             "cluster_code": station["cluster_code"],
+            "latitude": station["latitude"],
+            "longitude": station["longitude"],
             "current_bike_stock": station["current_bike_stock"],
             "predicted_demand": station["predicted_demand"],
             "stock_gap": station["stock_gap"],
@@ -240,3 +242,16 @@ def get_beta_master_items(
     if cluster_code:
         items = [item for item in items if item["cluster_code"] == cluster_code]
     return items
+
+
+def get_beta_weather_reference(district_name: str | None = None) -> tuple[float, float]:
+    """관리자 날씨 조회용 대표 좌표를 반환한다."""
+    stations = BETA_STATIONS
+    if district_name:
+        filtered = [station for station in stations if station["district_name"] == district_name]
+        if filtered:
+            stations = filtered
+
+    avg_lat = sum(station["latitude"] for station in stations) / len(stations)
+    avg_lon = sum(station["longitude"] for station in stations) / len(stations)
+    return avg_lat, avg_lon

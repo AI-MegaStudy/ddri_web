@@ -23,12 +23,19 @@ class AdminPageController extends GetxController {
   // ─── 결과 ───────────────────────────────
   final RxList<StationRiskItem> items = <StationRiskItem>[].obs;
   final RxList<ExceptionItem> exceptions = <ExceptionItem>[].obs;
+  final RxList<WeatherDayItem> weeklyForecast = <WeatherDayItem>[].obs;
+  final Rx<WeatherDayItem?> selectedForecast = Rx<WeatherDayItem?>(null);
+  final Rx<StationRiskItem?> focusedStation = Rx<StationRiskItem?>(null);
   final Rx<RiskSummary?> summary = Rx<RiskSummary?>(null);
   final RxBool isLoading = false.obs;
+  final RxBool isSupplementReady = false.obs;
+  final RxBool isMapReady = false.obs;
+  final RxBool weatherExpanded = true.obs;
   final RxString errorMessage = ''.obs;
   final RxBool exceptionsExpanded = false.obs;
   final RxString serviceMode = 'beta'.obs;
   final RxString listMode = ''.obs;
+  int _mapRenderTicket = 0;
 
   /// API용 ISO 8601 형식
   String get baseDatetimeIso =>
@@ -95,10 +102,17 @@ class AdminPageController extends GetxController {
     exceptionsExpanded.value = !exceptionsExpanded.value;
   }
 
+  void toggleWeatherExpanded() {
+    weatherExpanded.value = !weatherExpanded.value;
+  }
+
   Future<void> fetchRiskStations() async {
+    final requestTicket = ++_mapRenderTicket;
     try {
       errorMessage.value = '';
       isLoading.value = true;
+      isSupplementReady.value = false;
+      isMapReady.value = false;
       final res = await _api.getStationsRisk(
         baseDatetime: baseDatetimeIso,
         urgentOnly: urgentOnly.value,
@@ -108,21 +122,66 @@ class AdminPageController extends GetxController {
       );
       serviceMode.value = res.serviceMode;
       listMode.value = res.listMode;
-      items.value = res.items;
-      exceptions.value = res.exceptions;
+      items.assignAll(res.items);
+      exceptions.assignAll(res.exceptions);
+      weeklyForecast.assignAll(res.weather.weeklyForecast);
+      selectedForecast.value = res.weather.selectedForecast;
       summary.value = res.summary;
+      if (res.items.isEmpty) {
+        focusedStation.value = null;
+      } else {
+        final currentFocusedId = focusedStation.value?.stationId;
+        focusedStation.value =
+            res.items.firstWhereOrNull(
+              (item) => item.stationId == currentFocusedId,
+            ) ??
+            res.items.first;
+      }
       debugPrint(
         '[DDRI] 관리자 목록: total=${res.summary.totalCount}, risk=${res.summary.riskCount}',
       );
-    } catch (e) {
-      errorMessage.value = '재배치 목록을 불러오지 못했습니다.';
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      if (!isClosed && requestTicket == _mapRenderTicket) {
+        isSupplementReady.value = true;
+      }
+      if (res.items.isNotEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 160));
+        if (!isClosed && requestTicket == _mapRenderTicket) {
+          isMapReady.value = true;
+        }
+      }
+    } on ApiException catch (e) {
+      debugPrint('[DDRI] 관리자 목록 조회 실패(ApiException): ${e.message}');
+      errorMessage.value = e.message;
       items.clear();
       exceptions.clear();
+      weeklyForecast.clear();
+      selectedForecast.value = null;
+      focusedStation.value = null;
       summary.value = null;
       serviceMode.value = 'beta';
       listMode.value = '';
+      isSupplementReady.value = false;
+      isMapReady.value = false;
+    } catch (e) {
+      debugPrint('[DDRI] 관리자 목록 조회 실패: $e');
+      errorMessage.value = '재배치 목록을 불러오지 못했습니다.';
+      items.clear();
+      exceptions.clear();
+      weeklyForecast.clear();
+      selectedForecast.value = null;
+      focusedStation.value = null;
+      summary.value = null;
+      serviceMode.value = 'beta';
+      listMode.value = '';
+      isSupplementReady.value = false;
+      isMapReady.value = false;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void focusStation(StationRiskItem station) {
+    focusedStation.value = station;
   }
 }
