@@ -159,14 +159,14 @@
   },
   "items": [
     {
-      "station_id": 2328,
-      "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
-      "district_name": "역삼동",
-      "cluster_code": "cluster00",
-      "current_bike_stock": 7,
-      "predicted_demand": 12.0,
-      "stock_gap": -5.0,
-      "risk_score": 0.72,
+      "station_id": 2348,
+      "station_name": "포스코사거리(기업은행)",
+      "district_name": "삼성동",
+      "cluster_code": "cluster01",
+      "current_bike_stock": 4,
+      "predicted_demand": 9.1,
+      "stock_gap": -6.1,
+      "risk_score": 0.51,
       "reallocation_priority": 1,
       "operational_status": "operational"
     }

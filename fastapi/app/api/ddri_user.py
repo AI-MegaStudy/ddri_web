@@ -36,42 +36,25 @@ async def get_stations_nearby(
     service_mode = get_service_mode()
 
     if is_beta_mode():
-        items = get_beta_user_items(lat=lat, lng=lng, limit=limit or 6)
+        items = get_beta_user_items(
+            lat=lat,
+            lng=lng,
+            limit=limit or 6,
+            target_datetime=target_dt,
+            radius_m=radius_m,
+            service_tag="베타",
+        )
         list_mode = "beta_fixed_6"
     else:
-        items = [
-            {
-                "station_id": 2328,
-                "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
-                "address": "서울 강남구 역삼동 123-45",
-                "latitude": 37.5001,
-                "longitude": 127.0389,
-                "distance_m": 150,
-                "current_bike_stock": 7,
-                "predicted_rental_count": 5.2,
-                "predicted_remaining_bikes": 1.8,
-                "bike_availability_flag": True,
-                "availability_level": "low",
-                "operational_status": "operational",
-                "service_tag": "",
-            },
-            {
-                "station_id": 2348,
-                "station_name": "강남역 2번출구 앞",
-                "address": "서울 강남구 역삼동 456-78",
-                "latitude": 37.4985,
-                "longitude": 127.0276,
-                "distance_m": 320,
-                "current_bike_stock": 12,
-                "predicted_rental_count": 8.0,
-                "predicted_remaining_bikes": 4.0,
-                "bike_availability_flag": True,
-                "availability_level": "normal",
-                "operational_status": "operational",
-                "service_tag": "",
-            },
-        ]
-        list_mode = "live_nearby"
+        items = get_beta_user_items(
+            lat=lat,
+            lng=lng,
+            limit=limit or 6,
+            target_datetime=target_dt,
+            radius_m=radius_m,
+            service_tag="",
+        )
+        list_mode = "live_runtime_fixed_6"
 
     return {
         "target_datetime": target_dt,

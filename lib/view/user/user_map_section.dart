@@ -21,15 +21,21 @@ class UserMapSection extends StatefulWidget {
 class _UserMapSectionState extends State<UserMapSection> {
   /// 기본 줌 레벨 (사용자 위치 기준)
   static const double _defaultZoom = 15.0;
+  static const double _minZoom = 10.0;
+  static const double _maxZoom = 15.75;
+  static const double _zoomStep = 0.25;
 
   final MapController _mapController = MapController();
   late final UserPageController _ctrl;
   Worker? _focusWorker;
+  late LatLng _currentCenter;
+  double _currentZoom = _defaultZoom;
 
   @override
   void initState() {
     super.initState();
     _ctrl = Get.find<UserPageController>();
+    _currentCenter = const LatLng(37.505, 127.04);
     _focusWorker = ever<StationNearbyItem?>(_ctrl.focusedStation, (station) {
       if (station == null) return;
       unawaited(_moveToStation(station));
@@ -40,10 +46,10 @@ class _UserMapSectionState extends State<UserMapSection> {
   Future<void> _moveToStation(StationNearbyItem station) async {
     await Future<void>.delayed(const Duration(milliseconds: 50));
     if (!mounted) return;
-    _mapController.move(
-      LatLng(station.latitude, station.longitude),
-      16.0,
-    );
+    final center = LatLng(station.latitude, station.longitude);
+    _currentCenter = center;
+    _currentZoom = _maxZoom;
+    _mapController.move(center, _maxZoom);
   }
 
   /// 지도 초기화: 사용자 위치로 이동, 포커스 해제
@@ -51,8 +57,19 @@ class _UserMapSectionState extends State<UserMapSection> {
     if (!_ctrl.hasLocation) return;
     final userCenter = LatLng(_ctrl.lat.value!, _ctrl.lng.value!);
     _ctrl.clearFocusedStation();
+    _currentCenter = userCenter;
+    _currentZoom = _defaultZoom;
     _mapController.move(userCenter, _defaultZoom);
   }
+
+  void _zoomBy(double delta) {
+    final nextZoom = (_currentZoom + delta).clamp(_minZoom, _maxZoom);
+    _currentZoom = nextZoom;
+    _mapController.move(_currentCenter, nextZoom);
+  }
+
+  bool get _canZoomIn => _currentZoom < (_maxZoom - 0.001);
+  bool get _canZoomOut => _currentZoom > (_minZoom + 0.001);
 
   @override
   void dispose() {
@@ -70,6 +87,7 @@ class _UserMapSectionState extends State<UserMapSection> {
       }
 
       final userCenter = LatLng(ctrl.lat.value!, ctrl.lng.value!);
+      _currentCenter = userCenter;
       final stationMarkers = ctrl.items
           .map(
             (station) => Marker(
@@ -112,11 +130,16 @@ class _UserMapSectionState extends State<UserMapSection> {
                 options: MapOptions(
                   initialCenter: userCenter,
                   initialZoom: _defaultZoom,
-                  minZoom: 10.0,
-                  maxZoom: 16.0, // 18→16: 웹에서 고줌 시 멈춤 방지
+                  minZoom: _minZoom,
+                  maxZoom: _maxZoom,
                   interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.all,
+                    // 웹에서는 지도 위 마우스 휠이 페이지 스크롤을 막기 쉬워서 비활성화한다.
+                    flags: InteractiveFlag.all & ~InteractiveFlag.scrollWheelZoom,
                   ),
+                  onPositionChanged: (position, _) {
+                    _currentCenter = position.center;
+                    _currentZoom = position.zoom;
+                  },
                 ),
                 children: [
                   TileLayer(
@@ -171,16 +194,26 @@ class _UserMapSectionState extends State<UserMapSection> {
             Positioned(
               top: 12,
               right: 12,
-              child: Material(
-                color: Colors.white.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(999),
-                elevation: 1,
-                child: IconButton(
-                  onPressed: _resetMapView,
-                  icon: const Icon(Icons.refresh),
-                  tooltip: '지도 초기화',
-                  color: const Color(0xFF334155),
-                ),
+              child: Column(
+                children: [
+                  _MapActionButton(
+                    onPressed: _canZoomIn ? () => _zoomBy(_zoomStep) : null,
+                    icon: Icons.add,
+                    tooltip: '지도 확대',
+                  ),
+                  const SizedBox(height: 8),
+                  _MapActionButton(
+                    onPressed: _canZoomOut ? () => _zoomBy(-_zoomStep) : null,
+                    icon: Icons.remove,
+                    tooltip: '지도 축소',
+                  ),
+                  const SizedBox(height: 8),
+                  _MapActionButton(
+                    onPressed: _resetMapView,
+                    icon: Icons.refresh,
+                    tooltip: '지도 초기화',
+                  ),
+                ],
               ),
             ),
           ],
@@ -189,6 +222,33 @@ class _UserMapSectionState extends State<UserMapSection> {
         },
       );
     });
+  }
+}
+
+class _MapActionButton extends StatelessWidget {
+  const _MapActionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.tooltip,
+  });
+
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.92),
+      borderRadius: BorderRadius.circular(999),
+      elevation: 1,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        tooltip: tooltip,
+        color: const Color(0xFF334155),
+      ),
+    );
   }
 }
 

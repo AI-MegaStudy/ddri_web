@@ -49,7 +49,7 @@ paths:
     get:
       tags: [ddri-user]
       summary: 사용자 위치 기준 스테이션 조회
-      description: 베타 기간에는 고정 6개 스테이션을 거리순으로 재정렬해 반환한다.
+      description: 베타 기간에는 번들 기준 고정 6개 스테이션(2348, 2335, 2377, 2384, 2306, 2375)을 거리순으로 재정렬해 반환한다.
       parameters:
         - name: lat
           in: query
@@ -83,6 +83,7 @@ paths:
           schema:
             type: integer
             nullable: true
+          description: 반경(m). 사용자 화면에서 `300m`, `500m`, `1km` 중 하나를 선택한 경우에만 실제 필터로 사용
       responses:
         "200":
           description: 성공
@@ -97,7 +98,7 @@ paths:
     get:
       tags: [ddri-admin]
       summary: 관리자 위험도 목록 조회
-      description: 베타 기간에는 고정 6개 스테이션 기준 위험도 목록을 반환한다.
+      description: 베타 기간에는 번들 기준 고정 6개 스테이션(2348, 2335, 2377, 2384, 2306, 2375) 기준 위험도 목록을 반환한다.
       parameters:
         - name: base_datetime
           in: query
@@ -151,7 +152,7 @@ paths:
     get:
       tags: [ddri-stations]
       summary: 스테이션 마스터 목록 조회
-      description: 베타 기간에는 동일한 6개 스테이션만 반환한다.
+      description: 베타 기간에는 번들 기준 동일한 6개 스테이션(2348, 2335, 2377, 2384, 2306, 2375)만 반환한다.
       parameters:
         - name: district_name
           in: query
@@ -306,7 +307,7 @@ components:
           enum: [beta, live]
         list_mode:
           type: string
-          example: beta_fixed_6
+          example: live_runtime_fixed_6
         user_location:
           type: object
           properties:
@@ -337,7 +338,7 @@ components:
           enum: [beta, live]
         list_mode:
           type: string
-          example: beta_fixed_6
+          example: live_runtime_fixed_6
         weather:
           $ref: "#/components/schemas/WeatherBundle"
         summary:
@@ -360,7 +361,7 @@ components:
           enum: [beta, live]
         list_mode:
           type: string
-          example: beta_fixed_6
+          example: live_runtime_fixed_6
         items:
           type: array
           items:

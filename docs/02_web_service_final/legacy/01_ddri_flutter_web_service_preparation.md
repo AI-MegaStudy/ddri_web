@@ -146,12 +146,12 @@ Flutter 개발을 시작하려면 먼저 화면보다 응답 계약을 고정하
 
 ```json
 {
-  "station_id": 2328,
-  "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
+  "station_id": 2348,
+  "station_name": "포스코사거리(기업은행)",
   "target_datetime": "2026-03-16T18:00:00+09:00",
-  "current_bike_stock": 7,
-  "predicted_rental_count": 5.2,
-  "predicted_remaining_bikes": 1.8,
+  "current_bike_stock": 4,
+  "predicted_rental_count": 9.1,
+  "predicted_remaining_bikes": 0.0,
   "bike_availability_flag": true,
   "availability_level": "low",
   "operational_status": "operational"
@@ -165,18 +165,22 @@ Flutter 개발을 시작하려면 먼저 화면보다 응답 계약을 고정하
   "base_datetime": "2026-03-16T18:00:00+09:00",
   "items": [
     {
-      "station_id": 2328,
-      "cluster": "cluster00",
-      "current_bike_stock": 7,
-      "predicted_demand": 5.2,
-      "stock_gap": 1.8,
-      "risk_score": 0.72,
-      "reallocation_priority": 3,
+      "station_id": 2348,
+      "cluster": "cluster01",
+      "current_bike_stock": 4,
+      "predicted_demand": 9.1,
+      "stock_gap": -6.1,
+      "risk_score": 0.51,
+      "reallocation_priority": 1,
       "operational_status": "operational"
     }
   ]
 }
 ```
+
+현재 베타 고정 6개 기준:
+
+- `2348`, `2335`, `2377`, `2384`, `2306`, `2375`
 
 이 계약이 먼저 있어야 Flutter에서 목업 API로도 화면 개발을 병행할 수 있다.
 

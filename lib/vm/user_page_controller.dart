@@ -1,11 +1,10 @@
 // DDRI 사용자 컨트롤러: 위치/주소/반경/시간, 대여소·날씨 API, focusedStation
-import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 import '../common/api/ddri_api_client.dart';
 import '../common/api/models/station_models.dart';
-import '../core/design_token.dart';
+import '../utils/ddri_debug.dart';
 
 /// 사용자 페이지 상태·로직 (GetX).
 /// permanent: true로 등록되어 페이지 전환 시에도 유지.
@@ -20,7 +19,7 @@ class UserPageController extends GetxController {
   final Rx<double?> lng = Rx<double?>(null);
   final Rx<String> address = ''.obs;
   final Rx<DateTime> targetDatetime = DateTime.now().obs;
-  final Rx<int> radiusM = DesignToken.radiusOptions[1].obs; // 500m 기본
+  final RxnInt selectedRadiusM = RxnInt(); // null = 전체보기
 
   // ─── 결과 ───────────────────────────────
   final RxList<StationNearbyItem> items = <StationNearbyItem>[].obs;
@@ -55,7 +54,7 @@ class UserPageController extends GetxController {
   String get targetDatetimeIso =>
       '${targetDatetime.value.toIso8601String().substring(0, 19)}+09:00';
 
-  void setRadius(int m) => radiusM.value = m;
+  void setSelectedRadius(int? m) => selectedRadiusM.value = m;
 
   void setTargetDatetime(DateTime dt) => targetDatetime.value = dt;
 
@@ -65,7 +64,7 @@ class UserPageController extends GetxController {
       errorMessage.value = '';
       isLoadingLocation.value = true;
       final pos = await Geolocator.getCurrentPosition();
-      debugPrint('[DDRI] 현 위치 좌표: lat=${pos.latitude}, lng=${pos.longitude}');
+      ddriDebugPrint('[DDRI] 현 위치 좌표: lat=${pos.latitude}, lng=${pos.longitude}');
       lat.value = pos.latitude;
       lng.value = pos.longitude;
       address.value = '현재 위치';
@@ -83,7 +82,7 @@ class UserPageController extends GetxController {
     double newLng,
     String addr,
   ) async {
-    debugPrint('[DDRI] 주소 검색 좌표: lat=$newLat, lng=$newLng, addr=$addr');
+    ddriDebugPrint('[DDRI] 주소 검색 좌표: lat=$newLat, lng=$newLng, addr=$addr');
     lat.value = newLat;
     lng.value = newLng;
     address.value = addr;
@@ -104,8 +103,18 @@ class UserPageController extends GetxController {
         lng: ln,
         targetDatetime: targetDatetimeIso,
         limit: 20,
-        radiusM: radiusM.value,
+        radiusM: selectedRadiusM.value,
       );
+      for (final item in res.items) {
+        ddriDebugPrint(
+          '[DDRI][user] stationId=${item.stationId} '
+          'stationName="${item.stationName}" '
+          'current=${item.currentBikeStock} '
+          'predictedRental=${item.predictedRentalCount} '
+          'predictedRemaining=${item.predictedRemainingBikes} '
+          'availability=${item.availabilityLevel}',
+        );
+      }
       serviceMode.value = res.serviceMode;
       listMode.value = res.listMode;
       items.value = res.items;
@@ -113,15 +122,15 @@ class UserPageController extends GetxController {
         focusedStation.value = res.items.first;
       }
     } on ApiException catch (e, st) {
-      debugPrint('[DDRI] 대여소 목록 조회 실패: $e');
-      debugPrint('[DDRI] 스택: $st');
+      ddriDebugPrint('[DDRI] 대여소 목록 조회 실패: $e');
+      ddriDebugPrint('[DDRI] 스택: $st');
       errorMessage.value = e.message;
       items.clear();
       serviceMode.value = 'beta';
       listMode.value = '';
     } catch (e, st) {
-      debugPrint('[DDRI] 대여소 목록 조회 실패: $e');
-      debugPrint('[DDRI] 스택: $st');
+      ddriDebugPrint('[DDRI] 대여소 목록 조회 실패: $e');
+      ddriDebugPrint('[DDRI] 스택: $st');
       errorMessage.value = '대여소 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
       items.clear();
       serviceMode.value = 'beta';
@@ -147,14 +156,14 @@ class UserPageController extends GetxController {
         targetDatetime: targetDatetimeIso,
       );
     } on ApiException catch (e, st) {
-      debugPrint('[DDRI] 날씨 조회 실패: $e');
-      debugPrint('[DDRI] 스택: $st');
+      ddriDebugPrint('[DDRI] 날씨 조회 실패: $e');
+      ddriDebugPrint('[DDRI] 스택: $st');
       weeklyForecast.clear();
       selectedForecast.value = null;
       weatherErrorMessage.value = e.message;
     } catch (e, st) {
-      debugPrint('[DDRI] 날씨 조회 실패: $e');
-      debugPrint('[DDRI] 스택: $st');
+      ddriDebugPrint('[DDRI] 날씨 조회 실패: $e');
+      ddriDebugPrint('[DDRI] 스택: $st');
       weeklyForecast.clear();
       selectedForecast.value = null;
       weatherErrorMessage.value = '현재 날씨를 받아오지 못했습니다.';
@@ -177,9 +186,9 @@ class UserPageController extends GetxController {
     focusedStation.value = null;
   }
 
-  /// 반경 변경 시 재조회
-  Future<void> onRadiusChanged(int m) async {
-    setRadius(m);
+  /// 전체보기/반경 필터 변경 시 재조회
+  Future<void> onRadiusFilterChanged(int? radiusM) async {
+    setSelectedRadius(radiusM);
     if (hasLocation) await _fetchStations();
   }
 

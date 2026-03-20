@@ -20,7 +20,12 @@
 
 ## 공통 원칙
 
-- 사용자/관리자/스테이션 API는 베타 기간 동안 동일한 고정 6개 스테이션을 기준으로 응답한다.
+- 현재 사용자/관리자/스테이션 API는 동일한 top6 스테이션을 기준으로 응답한다.
+- 현재 top6 스테이션은 임시 런타임 번들 대상과 동일하다: `2348`, `2335`, `2377`, `2384`, `2306`, `2375`
+- 현재 `beta`와 `live` 모두 목업이 아니라 실제 실시간 재고 + 예측 런타임을 사용한다.
+- 다만 현재 `live`도 최종 운영 전체 스테이션 모드가 아니라 `live_runtime_fixed_6` 상태이며, 같은 6개만 반환한다.
+- 현재 예측 구조는 top6 연결을 위한 1차 런타임이다.
+- 최종 운영 모델 단위는 아직 확정되지 않았으며, 향후 `station별`, `cluster별`, `hybrid` 구조로 바뀔 수 있다.
 - 응답에는 `service_mode`, `list_mode` 같은 운영 상태 필드를 포함할 수 있다.
 - 화면 바인딩용 응답만 외부에 노출하고 모델 내부 피처 전체는 반환하지 않는다.
 - 예외 상황에서도 raw exception, stack trace, SQL, 내부 파일 경로 같은 문자열은 외부 응답에 포함하지 않는다.
@@ -55,7 +60,7 @@
 | `lng` | number | ✓ | 경도 |
 | `target_datetime` | string | ✓ | ISO 8601 기준 시각 |
 | `limit` | integer | | 반환 개수, 기본 `20`, 최대 `50` |
-| `radius_m` | integer | | 반경(m), 현재 베타 응답에서는 정렬 보조 의미만 가짐 |
+| `radius_m` | integer | | 반경(m). 사용자 화면에서 `300m`, `500m`, `1km` 중 하나를 선택한 경우에만 실제 필터로 사용 |
 
 #### 현재 응답 구조
 
@@ -89,16 +94,16 @@
   "items": [
     {
       "station_id": 2348,
-      "station_name": "포스코사거리(기업은행) 베타",
-      "address": "서울 강남구 테헤란로 인근",
-      "latitude": 37.507,
-      "longitude": 127.056,
+      "station_name": "포스코사거리(기업은행)",
+      "address": "서울특별시 강남구 테헤란로 501",
+      "latitude": 37.50723267,
+      "longitude": 127.05685425,
       "distance_m": 210,
-      "current_bike_stock": 9,
-      "predicted_rental_count": 4.5,
-      "predicted_remaining_bikes": 4.5,
+      "current_bike_stock": 4,
+      "predicted_rental_count": 9.1,
+      "predicted_remaining_bikes": 0.0,
       "bike_availability_flag": true,
-      "availability_level": "normal",
+      "availability_level": "low",
       "operational_status": "operational",
       "service_tag": "베타"
     }
@@ -109,7 +114,11 @@
 
 #### 메모
 
-- 베타 모드에서는 실제 주변 전체 조회가 아니라 고정 6개를 거리순으로 재정렬해 반환한다.
+- 현재는 실제 주변 전체 조회가 아니라 top6를 거리순으로 재정렬해 반환한다.
+- 사용자 화면은 `전체보기`, `300m`, `500m`, `1km` 네 개 선택지 중 하나를 가진다.
+- `전체보기`에서는 `radius_m` 없이 top6 전체를 거리순으로 반환한다.
+- `300m`, `500m`, `1km` 중 하나를 선택하면 해당 `radius_m` 이내 top6만 반환한다.
+- `live` 모드 현재 구현도 `live_runtime_fixed_6`이며, 최종 운영 전체 조회가 아니라 같은 6개를 실제 실시간 재고와 예측값으로 반환한다.
 - `target_datetime` 형식 검증 실패 시 현재 구현은 `400`을 반환한다.
 - `exceptions`는 현재 베타 응답에서는 빈 배열이다.
 
@@ -166,13 +175,13 @@
   "items": [
     {
       "station_id": 2348,
-      "station_name": "포스코사거리(기업은행) 베타",
-      "district_name": "역삼동",
-      "cluster_code": "cluster00",
+      "station_name": "포스코사거리(기업은행)",
+      "district_name": "삼성동",
+      "cluster_code": "cluster01",
       "current_bike_stock": 4,
-      "predicted_demand": 8.0,
-      "stock_gap": -4.0,
-      "risk_score": 0.76,
+      "predicted_demand": 9.1,
+      "stock_gap": -6.1,
+      "risk_score": 0.51,
       "reallocation_priority": 1,
       "operational_status": "operational",
       "service_tag": "베타"
@@ -184,19 +193,10 @@
 
 #### 메모
 
-- 베타 모드에서는 동일한 6개 스테이션만 사용한다.
+- 현재는 동일한 top6 스테이션만 사용한다.
+- `live` 모드 현재 구현도 `live_runtime_fixed_6`이며, 최종 운영 전체 위험 목록이 아니라 같은 6개를 실제 실시간 재고와 예측값으로 반환한다.
 - `summary.exception_count`는 현재 베타 기준 `0`이다.
 - 예외 정보는 `station_id` 대신 집계형 항목으로만 노출한다.
-- `live` 모드 목업 응답의 예외 예시는 아래와 같다.
-
-```json
-[
-  {
-    "reason": "실시간 데이터가 일부 준비되지 않았습니다.",
-    "count": 3
-  }
-]
-```
 
 ## 4. 스테이션 마스터 API
 
@@ -222,13 +222,13 @@
   "items": [
     {
       "station_id": 2348,
-      "api_station_id": "ST-2348",
-      "station_name": "포스코사거리(기업은행) 베타",
-      "district_name": "역삼동",
-      "address": "서울 강남구 테헤란로 인근",
-      "latitude": 37.507,
-      "longitude": 127.056,
-      "cluster_code": "cluster00",
+      "api_station_id": "ST-797",
+      "station_name": "포스코사거리(기업은행)",
+      "district_name": "삼성동",
+      "address": "서울특별시 강남구 테헤란로 501",
+      "latitude": 37.50723267,
+      "longitude": 127.05685425,
+      "cluster_code": "cluster01",
       "operational_status": "operational",
       "service_tag": "베타"
     }
@@ -239,8 +239,9 @@
 
 #### 메모
 
-- 베타 모드에서는 운영용 전체 마스터를 반환하지 않는다.
-- `live` 모드용 실제 마스터 원본 위치와 로딩 구조는 아직 확정되지 않았다.
+- 현재는 운영용 전체 마스터를 반환하지 않는다.
+- `live` 모드 현재 구현도 `live_runtime_fixed_6`이며, 최종 운영 전체 마스터가 아니라 같은 6개 마스터만 반환한다.
+- 전체 운영 마스터 원본 위치와 로딩 구조는 아직 후속 작업이다.
 
 ## 5. 날씨 API
 
@@ -308,8 +309,7 @@
 
 ## 6. 현재 미완료 항목
 
-- 외부 실시간 재고 API 연동
-- 예측 모델 런타임 연결
 - `live` 모드용 실제 마스터 로딩 구조 확정
+- `live` 모드용 전체 스테이션 확장
 - 입력 오류 문구와 예외 응답의 외부 노출 문구 일반화
 - 관리자 `exceptions` 구조의 보안형 응답 정리

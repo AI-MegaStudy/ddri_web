@@ -1,10 +1,10 @@
 // DDRI API 클라이언트: 사용자/관리자/날씨 API, baseUrl 플랫폼별
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../utils/custom_common_util.dart';
+import '../../utils/ddri_debug.dart';
 import 'models/station_models.dart';
 
 /// DDRI API 클라이언트.
@@ -47,7 +47,7 @@ class DdriApiClient {
     int limit = 20,
     int? radiusM,
   }) async {
-    debugPrint('[DDRI] 좌표 수신: lat=$lat, lng=$lng');
+    ddriDebugPrint('[DDRI] 좌표 수신: lat=$lat, lng=$lng');
     final params = <String, String>{
       'lat': lat.toString(),
       'lng': lng.toString(),
@@ -60,7 +60,7 @@ class DdriApiClient {
 
     final json = await _get('/user/stations/nearby', queryParams: params);
     final res = NearbyStationsResponse.fromJson(json);
-    debugPrint(
+    ddriDebugPrint(
       '[DDRI] API 응답 user_location: lat=${res.userLocation.lat}, lng=${res.userLocation.lng}',
     );
     return res;
@@ -87,12 +87,12 @@ class DdriApiClient {
     }
 
     final json = await _get('/admin/stations/risk', queryParams: params);
-    debugPrint(
+    ddriDebugPrint(
       '[DDRI] 관리자 API 응답 수신: items=${(json['items'] as List<dynamic>?)?.length ?? 0}, '
       'weather=${json['weather'] != null}, summary=${json['summary'] != null}',
     );
     final res = RiskStationsResponse.fromJson(json);
-    debugPrint(
+    ddriDebugPrint(
       '[DDRI] 관리자 API 파싱 완료: items=${res.items.length}, '
       'weekly=${res.weather.weeklyForecast.length}, focused-ready=${res.items.isNotEmpty}',
     );
@@ -341,16 +341,20 @@ class RiskSummary {
     required this.riskCount,
     required this.exceptionCount,
     required this.avgRiskScore,
+    required this.avgPredictedRemainingBikes,
   });
   final int totalCount;
   final int riskCount;
   final int exceptionCount;
   final double avgRiskScore;
+  final double avgPredictedRemainingBikes;
   factory RiskSummary.fromJson(Map<String, dynamic> json) => RiskSummary(
     totalCount: json['total_count'] as int? ?? 0,
     riskCount: json['risk_count'] as int? ?? 0,
     exceptionCount: json['exception_count'] as int? ?? 0,
     avgRiskScore: (json['avg_risk_score'] as num?)?.toDouble() ?? 0,
+    avgPredictedRemainingBikes:
+        (json['avg_predicted_remaining_bikes'] as num?)?.toDouble() ?? 0,
   );
 }
 

@@ -212,11 +212,11 @@ GET /api/stations/nearby?lat=37.5&lng=127.0&target_datetime=2026-03-18T18:00:00&
 
 ```json
 {
-  "station_id": 2328,
-  "station_name": "르네상스 호텔 사거리...",
-  "current_bike_stock": 7,
-  "predicted_rental_count": 5.2,
-  "predicted_remaining_bikes": 1.8,
+  "station_id": 2348,
+  "station_name": "포스코사거리(기업은행)",
+  "current_bike_stock": 4,
+  "predicted_rental_count": 9.1,
+  "predicted_remaining_bikes": 0.0,
   "bike_availability_flag": true,
   "availability_level": "low",
   "operational_status": "operational"

@@ -1,9 +1,12 @@
 // DDRI 관리자 대여소 목록: DataTable, 8개 shrinkWrap / 9개+ 스크롤
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../common/api/models/station_models.dart';
 import '../../core/design_token.dart';
+import '../../utils/ddri_debug.dart';
 import '../../vm/admin_page_controller.dart';
 
 /// 관리자 대여소 목록 (테이블 형식). _StationHeaderRow + _StationDataRow.
@@ -15,7 +18,7 @@ class AdminStationList extends StatelessWidget {
     final ctrl = Get.find<AdminPageController>();
 
     return Obx(() {
-      debugPrint(
+      ddriDebugPrint(
         '[DDRI] AdminStationList build: ctrl=${ctrl.hashCode}, loading=${ctrl.isLoading.value}, items=${ctrl.items.length}',
       );
       if (ctrl.isLoading.value && ctrl.items.isEmpty) {
@@ -126,9 +129,12 @@ class _StationMobileCard extends StatelessWidget {
 
   final StationRiskItem station;
 
+  int get _predictedRemainingDisplay => math.max(0, station.predictedRemainingBikes.ceil());
+  int get _shortageDisplay => math.max(0, station.shortageBikes.ceil());
+
   Color get _riskColor {
-    if (station.riskScore >= 0.75) return const Color(0xFFEF4444);
-    if (station.riskScore >= 0.5) return const Color(0xFFF97316);
+    if (station.predictedRemainingBikes <= 2) return const Color(0xFFEF4444);
+    if (station.predictedRemainingBikes <= 5) return const Color(0xFFF97316);
     return DesignToken.primary;
   }
 
@@ -251,15 +257,15 @@ class _StationMobileCard extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _MetricTile(
-                        label: '예측수요',
-                        value: station.predictedDemand.toStringAsFixed(1),
+                        label: '예상 잔여',
+                        value: '$_predictedRemainingDisplay대',
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _MetricTile(
-                        label: '차이',
-                        value: station.stockGap.toStringAsFixed(1),
+                        label: '부족 예상',
+                        value: '$_shortageDisplay대',
                         valueColor: gapColor,
                       ),
                     ),
@@ -281,7 +287,9 @@ class _StationMobileCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      '위험 ${station.riskScore.toStringAsFixed(1)}',
+                      station.predictedRemainingBikes <= 5
+                          ? '예상 잔여 $_predictedRemainingDisplay대'
+                          : '안정',
                       style: TextStyle(
                         color: _riskColor,
                         fontWeight: FontWeight.w800,
@@ -362,14 +370,14 @@ class _StationHeaderRow extends StatelessWidget {
           _Cell(
             width: 110,
             alignment: Alignment.center,
-            child: _HeaderText('예측수요'),
+            child: _HeaderText('예상 잔여'),
           ),
           _Cell(
-            width: 90,
+            width: 100,
             alignment: Alignment.center,
-            child: _HeaderText('차이'),
+            child: _HeaderText('부족 예상'),
           ),
-          _Cell(width: 220, child: _HeaderText('위험도')),
+          _Cell(width: 220, child: _HeaderText('위험 기준')),
           _Cell(
             width: 100,
             alignment: Alignment.center,
@@ -386,9 +394,12 @@ class _StationDataRow extends StatelessWidget {
 
   final StationRiskItem station;
 
+  int get _predictedRemainingDisplay => math.max(0, station.predictedRemainingBikes.ceil());
+  int get _shortageDisplay => math.max(0, station.shortageBikes.ceil());
+
   Color get _riskColor {
-    if (station.riskScore >= 0.75) return const Color(0xFFEF4444);
-    if (station.riskScore >= 0.5) return const Color(0xFFF97316);
+    if (station.predictedRemainingBikes <= 2) return const Color(0xFFEF4444);
+    if (station.predictedRemainingBikes <= 5) return const Color(0xFFF97316);
     return DesignToken.primary;
   }
 
@@ -477,15 +488,15 @@ class _StationDataRow extends StatelessWidget {
                   width: 110,
                   alignment: Alignment.center,
                   child: Text(
-                    station.predictedDemand.toStringAsFixed(1),
+                    '$_predictedRemainingDisplay대',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 _Cell(
-                  width: 90,
+                  width: 100,
                   alignment: Alignment.center,
                   child: Text(
-                    station.stockGap.toStringAsFixed(1),
+                    '$_shortageDisplay대',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: gapColor,
@@ -511,9 +522,11 @@ class _StationDataRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       SizedBox(
-                        width: 36,
+                        width: 88,
                         child: Text(
-                          station.riskScore.toStringAsFixed(1),
+                          station.predictedRemainingBikes <= 5
+                              ? '잔여 $_predictedRemainingDisplay대'
+                              : '안정',
                           style: TextStyle(
                             color: _riskColor,
                             fontWeight: FontWeight.w800,

@@ -105,57 +105,46 @@ async def get_stations_risk(
             urgent_only=urgent_only,
             sort_by=sort_col,
             sort_order=sort_dir,
+            base_datetime=base_dt,
+            service_tag="베타",
         )
         summary = {
             "total_count": len(items),
-            "risk_count": len([item for item in items if item["risk_score"] >= 0.5]),
+            "risk_count": len([item for item in items if item["predicted_remaining_bikes"] <= 5.0]),
             "exception_count": 0,
             "avg_risk_score": round(
                 sum(item["risk_score"] for item in items) / len(items),
                 2,
             ) if items else 0.0,
+            "avg_predicted_remaining_bikes": round(
+                sum(item["predicted_remaining_bikes"] for item in items) / len(items),
+                1,
+            ) if items else 0.0,
         }
         list_mode = "beta_fixed_6"
     else:
-        items = [
-            {
-                "station_id": 2328,
-                "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
-                "district_name": "역삼동",
-                "cluster_code": "cluster00",
-                "latitude": 37.5001,
-                "longitude": 127.0389,
-                "current_bike_stock": 7,
-                "predicted_demand": 12.0,
-                "stock_gap": -5.0,
-                "risk_score": 0.72,
-                "reallocation_priority": 1,
-                "operational_status": "operational",
-                "service_tag": "",
-            },
-            {
-                "station_id": 2348,
-                "station_name": "강남역 2번출구 앞",
-                "district_name": "역삼동",
-                "cluster_code": "cluster01",
-                "latitude": 37.4985,
-                "longitude": 127.0276,
-                "current_bike_stock": 3,
-                "predicted_demand": 8.0,
-                "stock_gap": -5.0,
-                "risk_score": 0.68,
-                "reallocation_priority": 2,
-                "operational_status": "operational",
-                "service_tag": "",
-            },
-        ]
+        items = get_beta_admin_items(
+            district_name=district,
+            urgent_only=urgent_only,
+            sort_by=sort_col,
+            sort_order=sort_dir,
+            base_datetime=base_dt,
+            service_tag="",
+        )
         summary = {
-            "total_count": 161,
-            "risk_count": 23,
-            "exception_count": 3,
-            "avg_risk_score": 0.42,
+            "total_count": len(items),
+            "risk_count": len([item for item in items if item["predicted_remaining_bikes"] <= 5.0]),
+            "exception_count": 0,
+            "avg_risk_score": round(
+                sum(item["risk_score"] for item in items) / len(items),
+                2,
+            ) if items else 0.0,
+            "avg_predicted_remaining_bikes": round(
+                sum(item["predicted_remaining_bikes"] for item in items) / len(items),
+                1,
+            ) if items else 0.0,
         }
-        list_mode = "live_risk"
+        list_mode = "live_runtime_fixed_6"
 
     try:
         weather_payload = _build_weather_payload(
@@ -175,7 +164,5 @@ async def get_stations_risk(
         "weather": weather_payload,
         "summary": summary,
         "items": items,
-        "exceptions": [] if is_beta_mode() else [
-            {"reason": "실시간 데이터가 일부 준비되지 않았습니다.", "count": 3},
-        ],
+        "exceptions": [],
     }

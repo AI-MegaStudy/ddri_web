@@ -20,6 +20,7 @@
   - [02_system_design.md](/Users/cheng80/Desktop/ddri_web/docs/02_web_service_final/02_system_design.md)
   - [03_api_and_runtime_contract.md](/Users/cheng80/Desktop/ddri_web/docs/02_web_service_final/03_api_and_runtime_contract.md)
 - 베타 기간에는 사용자/관리자/마스터 API 모두 고정 6개 스테이션 정책을 기준으로 문서를 유지한다.
+- 현재 고정 6개는 번들 생성 대상과 동일하다: `2348`, `2335`, `2377`, `2384`, `2306`, `2375`
 - 예외 상황에서도 외부 응답 문서는 내부 예외 정보, raw body, stack trace 노출을 허용하지 않는 방향으로 유지한다.
 
 ## 현재 문서 읽는 순서

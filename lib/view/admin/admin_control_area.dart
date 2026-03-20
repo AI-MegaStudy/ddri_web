@@ -58,7 +58,7 @@ class AdminControlArea extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '긴급만',
+                            '긴급만(예상 잔여 5대 이하)',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
@@ -118,7 +118,7 @@ class AdminControlArea extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '긴급만',
+                            '긴급만(예상 잔여 5대 이하)',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),

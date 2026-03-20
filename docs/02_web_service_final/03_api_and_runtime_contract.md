@@ -17,6 +17,7 @@
 
 - 사용자 위치 또는 주소 좌표
 - 기준 시각 또는 목표 시각
+- 조회 방식: `전체보기`, `300m`, `500m`, `1km` 중 하나
 - 필요 시 반경, 개수 제한
 
 예시:
@@ -76,12 +77,18 @@
 
 ### 현재 모델 가정 초안
 
-현재 확보한 분석 자료 기준으로는, 운영 모델의 1차 가정을 아래처럼 둔다.
+현재 확보한 분석 자료 기준으로는, 연결용 1차 런타임 가정을 아래처럼 둔다.
 
-- 적용 스테이션은 성능 상위 6개를 우선 사용
+- 적용 스테이션은 성능 상위 6개를 임시 사용
   - `2348`, `2335`, `2377`, `2384`, `2306`, `2375`
 - 직접 예측 타깃은 `rental_count`, `return_count`
 - 재고는 직접 예측값이 아니라 현재 재고와 예측 대여/반납량의 계산값으로 다룸
+
+주의:
+
+- 이 구조는 현재 서비스 연결을 위한 임시 런타임 기준이다.
+- 최종 운영 모델이 반드시 `station별 joblib` 구조로 유지된다고 가정하지 않는다.
+- 향후 운영 모델은 `station별`, `cluster별`, `hybrid routing` 중 하나로 재정의될 수 있다.
 
 예시 개념:
 
@@ -122,6 +129,7 @@ predicted_remaining_bikes = current_bike_stock - predicted_rental_count + predic
 용도:
 - 지정 위치 기준 근처 대여소 조회
 - 현재 재고와 예측 결과를 함께 반환
+- 현재는 top6 기준으로 동작하며, `radius_m`가 없으면 `전체보기`, 있으면 해당 거리 필터로 해석한다
 
 ### 관리자 조회
 
@@ -197,6 +205,8 @@ predicted_remaining_bikes = current_bike_stock - predicted_rental_count + predic
 - 예외 스테이션은 별도 배열로 분리 가능
 - 주간 날씨와 선택 시각 날씨를 함께 포함할 수 있다
 - 베타 기간에는 고정 목록 모드(`beta`)를 허용하고, 운영 전환 후 `live` 모드 응답으로 확장 가능해야 한다
+- 현재 `live`도 실제 런타임을 사용하지만, 전체 운영 마스터가 아직 없어 응답 범위는 `live_runtime_fixed_6`으로 제한한다
+- 즉 현재 `live`는 운영 최종형이 아니라, 실제 재고/예측을 연결한 top6 한정 임시 운영 상태다
 
 ### 관리자 응답
 
@@ -205,6 +215,8 @@ predicted_remaining_bikes = current_bike_stock - predicted_rental_count + predic
 - 예외 스테이션은 별도 배열
 - 기준 시각 판단을 돕는 날씨 정보 포함 가능
 - 베타 종료 후에도 응답 계약 자체는 유지하고, 데이터 소스만 `live` 모드로 교체할 수 있어야 한다
+- 현재 `live`도 실제 실시간 재고와 예측 번들을 사용하며, 전체 운영 확장 전까지는 `live_runtime_fixed_6` 상태를 유지한다
+- 이후 관리자 위험도 계산도 모델 단위 재정의에 따라 station별 계산에서 cluster별 또는 혼합 계산으로 바뀔 수 있다
 
 ## 8. 예외 처리 원칙
 
@@ -229,7 +241,7 @@ predicted_remaining_bikes = current_bike_stock - predicted_rental_count + predic
 {
   "prediction_time": "2026-03-19T14:00:00+09:00",
   "target_time": "2026-03-19T18:00:00+09:00",
-  "station_id": 2328,
+  "station_id": 2348,
   "horizon_hours": 4,
   "predicted_stock": 3.2,
   "predicted_net_change": -2.8,
@@ -256,4 +268,4 @@ predicted_remaining_bikes = current_bike_stock - predicted_rental_count + predic
 - API는 화면 응답 중심으로 단순하게 유지한다.
 - DB는 API 계약의 필수 조건이 아니다.
 - 마스터 데이터 API 자동 갱신과 DB 저장은 현재 선행 범위가 아니다.
-- 따라서 당장 검토 대상은 DB 스키마 확대보다 `live` 모드의 마스터 로딩 원본과 갱신 절차다.
+- 따라서 당장 검토 대상은 DB 스키마 확대보다 `live` 모드의 전체 마스터 로딩 원본과 고정 6개 해제 절차다.

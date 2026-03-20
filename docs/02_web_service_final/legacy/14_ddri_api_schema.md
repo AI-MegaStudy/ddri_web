@@ -59,15 +59,15 @@
   "user_location": { "lat": 37.5012, "lng": 127.0396 },
   "items": [
     {
-      "station_id": 2328,
-      "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
-      "address": "서울 강남구 역삼동 123-45",
-      "latitude": 37.5001,
-      "longitude": 127.0389,
+      "station_id": 2348,
+      "station_name": "포스코사거리(기업은행)",
+      "address": "서울특별시 강남구 테헤란로 501",
+      "latitude": 37.50723267,
+      "longitude": 127.05685425,
       "distance_m": 150,
-      "current_bike_stock": 7,
-      "predicted_rental_count": 5.2,
-      "predicted_remaining_bikes": 1.8,
+      "current_bike_stock": 4,
+      "predicted_rental_count": 9.1,
+      "predicted_remaining_bikes": 0.0,
       "bike_availability_flag": true,
       "availability_level": "low",
       "operational_status": "operational"
@@ -123,14 +123,14 @@
   },
   "items": [
     {
-      "station_id": 2328,
-      "station_name": "르네상스 호텔 사거리 역삼지하보도 7번출구 앞",
-      "district_name": "역삼동",
-      "cluster_code": "cluster00",
-      "current_bike_stock": 7,
-      "predicted_demand": 12.0,
-      "stock_gap": -5.0,
-      "risk_score": 0.72,
+      "station_id": 2348,
+      "station_name": "포스코사거리(기업은행)",
+      "district_name": "삼성동",
+      "cluster_code": "cluster01",
+      "current_bike_stock": 4,
+      "predicted_demand": 9.1,
+      "stock_gap": -6.1,
+      "risk_score": 0.51,
       "reallocation_priority": 1,
       "operational_status": "operational"
     }

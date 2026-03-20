@@ -6,6 +6,7 @@ import 'package:kpostal_plus/kpostal_plus.dart';
 import '../../app_config.dart';
 import '../../common/geocoding/address_geocoder.dart' show geocodeKpostal;
 import '../../core/design_token.dart';
+import '../../utils/ddri_debug.dart';
 import '../../vm/user_page_controller.dart';
 
 /// 검색/입력 영역: 내 위치 찾기, 주소 찾기, 시간대 선택, 반경 선택.
@@ -73,19 +74,29 @@ class UserSearchArea extends StatelessWidget {
             );
           }),
           const SizedBox(height: 12),
-          // 반경 선택
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: DesignToken.radiusOptions.map((m) {
-              final isSelected = ctrl.radiusM.value == m;
-              return ChoiceChip(
-                label: Text(m >= 1000 ? '${m ~/ 1000}km' : '${m}m'),
-                selected: isSelected,
-                onSelected: (_) => ctrl.onRadiusChanged(m),
-                selectedColor: DesignToken.primary.withValues(alpha: 0.3),
-              );
-            }).toList(),
+          // 조회 방식 / 반경 필터
+          Obx(
+            () => Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('전체보기'),
+                  selected: ctrl.selectedRadiusM.value == null,
+                  onSelected: (_) => ctrl.onRadiusFilterChanged(null),
+                  selectedColor: DesignToken.primary.withValues(alpha: 0.3),
+                ),
+                ...DesignToken.radiusOptions.map((m) {
+                  final isSelected = ctrl.selectedRadiusM.value == m;
+                  return ChoiceChip(
+                    label: Text(m >= 1000 ? '${m ~/ 1000}km' : '${m}m'),
+                    selected: isSelected,
+                    onSelected: (_) => ctrl.onRadiusFilterChanged(m),
+                    selectedColor: DesignToken.primary.withValues(alpha: 0.3),
+                  );
+                }),
+              ],
+            ),
           ),
           // 에러 메시지
           Obx(() {
@@ -131,7 +142,7 @@ class UserSearchArea extends StatelessWidget {
     }
 
     if (la != null && ln != null) {
-      debugPrint('[DDRI] 주소 검색 결과 좌표: lat=$la, lng=$ln');
+      ddriDebugPrint('[DDRI] 주소 검색 결과 좌표: lat=$la, lng=$ln');
       ctrl.applyAddressAndFetch(la, ln, result.address);
     } else {
       ctrl.errorMessage.value = '선택한 주소의 좌표를 가져올 수 없습니다. 카카오 API 키(JavaScript 키)를 설정해 보세요.';

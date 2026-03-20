@@ -65,6 +65,8 @@ class StationRiskItem {
     required this.longitude,
     required this.currentBikeStock,
     required this.predictedDemand,
+    required this.predictedRemainingBikes,
+    required this.shortageBikes,
     required this.stockGap,
     required this.riskScore,
     required this.reallocationPriority,
@@ -80,6 +82,8 @@ class StationRiskItem {
   final double longitude;
   final int currentBikeStock;
   final double predictedDemand;
+  final double predictedRemainingBikes;
+  final double shortageBikes;
   final double stockGap;
   final double riskScore;
   final int reallocationPriority;
@@ -96,6 +100,9 @@ class StationRiskItem {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       currentBikeStock: json['current_bike_stock'] as int? ?? 0,
       predictedDemand: (json['predicted_demand'] as num?)?.toDouble() ?? 0,
+      predictedRemainingBikes:
+          (json['predicted_remaining_bikes'] as num?)?.toDouble() ?? 0,
+      shortageBikes: (json['shortage_bikes'] as num?)?.toDouble() ?? 0,
       stockGap: (json['stock_gap'] as num?)?.toDouble() ?? 0,
       riskScore: (json['risk_score'] as num?)?.toDouble() ?? 0,
       reallocationPriority: json['reallocation_priority'] as int? ?? 0,

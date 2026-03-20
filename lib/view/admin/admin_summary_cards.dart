@@ -28,7 +28,7 @@ class AdminSummaryCards extends StatelessWidget {
               icon: Icons.directions_bike,
             ),
             _SummaryCard(
-              label: '위험',
+              label: '위험(예상 잔여 5대 이하)',
               value: '${s.riskCount}',
               color: Colors.red.shade600,
               icon: Icons.warning_amber_rounded,
@@ -41,8 +41,8 @@ class AdminSummaryCards extends StatelessWidget {
               icon: Icons.visibility_off,
             ),
             _SummaryCard(
-              label: '평균 위험도',
-              value: s.avgRiskScore.toStringAsFixed(1),
+              label: '평균 예상 잔여',
+              value: '${s.avgPredictedRemainingBikes.toStringAsFixed(1)}대',
               color: DesignToken.primary,
               icon: Icons.analytics_outlined,
             ),

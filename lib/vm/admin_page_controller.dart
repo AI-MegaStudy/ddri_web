@@ -1,9 +1,9 @@
 // DDRI 관리자 컨트롤러: 기준 시각, 긴급만, 행정동, 정렬, /v1/admin/stations/risk
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../common/api/ddri_api_client.dart';
 import '../common/api/models/station_models.dart';
+import '../utils/ddri_debug.dart';
 
 /// 관리자 페이지 상태·로직 (GetX).
 /// onReady에서 fetchRiskStations 자동 호출.
@@ -55,16 +55,10 @@ class AdminPageController extends GetxController {
   /// 강남구 행정동 (필터용)
   static const List<String> districtOptions = [
     '전체',
-    '역삼동',
-    '청담동',
+    '도곡동',
     '삼성동',
-    '대치동',
-    '논현동',
     '압구정동',
-    '세곡동',
     '자곡동',
-    '율현동',
-    '일원동',
     '수서동',
   ];
 
@@ -120,6 +114,17 @@ class AdminPageController extends GetxController {
         sortBy: sortBy.value,
         sortOrder: sortOrder.value,
       );
+      for (final item in res.items) {
+        ddriDebugPrint(
+          '[DDRI][admin] stationId=${item.stationId} '
+          'stationName="${item.stationName}" '
+          'current=${item.currentBikeStock} '
+          'predictedDemand=${item.predictedDemand} '
+          'predictedRemaining=${item.predictedRemainingBikes} '
+          'shortage=${item.shortageBikes} '
+          'risk=${item.riskScore}',
+        );
+      }
       serviceMode.value = res.serviceMode;
       listMode.value = res.listMode;
       items.assignAll(res.items);
@@ -137,7 +142,7 @@ class AdminPageController extends GetxController {
             ) ??
             res.items.first;
       }
-      debugPrint(
+      ddriDebugPrint(
         '[DDRI] 관리자 목록: total=${res.summary.totalCount}, risk=${res.summary.riskCount}',
       );
       await Future<void>.delayed(const Duration(milliseconds: 80));
@@ -151,7 +156,7 @@ class AdminPageController extends GetxController {
         }
       }
     } on ApiException catch (e) {
-      debugPrint('[DDRI] 관리자 목록 조회 실패(ApiException): ${e.message}');
+      ddriDebugPrint('[DDRI] 관리자 목록 조회 실패(ApiException): ${e.message}');
       errorMessage.value = e.message;
       items.clear();
       exceptions.clear();
@@ -164,7 +169,7 @@ class AdminPageController extends GetxController {
       isSupplementReady.value = false;
       isMapReady.value = false;
     } catch (e) {
-      debugPrint('[DDRI] 관리자 목록 조회 실패: $e');
+      ddriDebugPrint('[DDRI] 관리자 목록 조회 실패: $e');
       errorMessage.value = '재배치 목록을 불러오지 못했습니다.';
       items.clear();
       exceptions.clear();

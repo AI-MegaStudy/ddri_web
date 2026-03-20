@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../common/api/models/station_models.dart';
 import '../../core/design_token.dart';
+import '../../utils/ddri_debug.dart';
 import '../../vm/admin_page_controller.dart';
 
 /// 관리자 지도: 현재 필터 결과를 마커로 표시하고 선택 행과 연동한다.
@@ -19,16 +20,22 @@ class AdminMapPlaceholder extends StatefulWidget {
 
 class _AdminMapPlaceholderState extends State<AdminMapPlaceholder> {
   static const double _defaultZoom = 12.8;
+  static const double _minZoom = 10.0;
+  static const double _maxZoom = 15.75;
+  static const double _zoomStep = 0.25;
 
   final MapController _mapController = MapController();
   late final AdminPageController _ctrl;
   Worker? _focusWorker;
   Worker? _itemsWorker;
+  late LatLng _currentCenter;
+  double _currentZoom = _defaultZoom;
 
   @override
   void initState() {
     super.initState();
     _ctrl = Get.find<AdminPageController>();
+    _currentCenter = const LatLng(37.505, 127.04);
     _focusWorker = ever<StationRiskItem?>(_ctrl.focusedStation, (station) {
       if (station == null) return;
       unawaited(
@@ -47,14 +54,28 @@ class _AdminMapPlaceholderState extends State<AdminMapPlaceholder> {
   Future<void> _moveMap({required LatLng center, required double zoom}) async {
     await Future<void>.delayed(const Duration(milliseconds: 50));
     if (!mounted) return;
+    _currentCenter = center;
+    _currentZoom = zoom;
     _mapController.move(center, zoom);
   }
 
   void _resetMapView() {
     if (_ctrl.items.isEmpty) return;
     _ctrl.focusedStation.value = null;
-    _mapController.move(_averageCenter(_ctrl.items), _defaultZoom);
+    final center = _averageCenter(_ctrl.items);
+    _currentCenter = center;
+    _currentZoom = _defaultZoom;
+    _mapController.move(center, _defaultZoom);
   }
+
+  void _zoomBy(double delta) {
+    final nextZoom = (_currentZoom + delta).clamp(_minZoom, _maxZoom);
+    _currentZoom = nextZoom;
+    _mapController.move(_currentCenter, nextZoom);
+  }
+
+  bool get _canZoomIn => _currentZoom < (_maxZoom - 0.001);
+  bool get _canZoomOut => _currentZoom > (_minZoom + 0.001);
 
   LatLng _averageCenter(List<StationRiskItem> items) {
     if (items.isEmpty) {
@@ -81,7 +102,7 @@ class _AdminMapPlaceholderState extends State<AdminMapPlaceholder> {
     final ctrl = _ctrl;
 
     return Obx(() {
-      debugPrint(
+      ddriDebugPrint(
         '[DDRI] AdminMap build: ctrl=${ctrl.hashCode}, items=${ctrl.items.length}, focused=${ctrl.focusedStation.value?.stationId}',
       );
       if (ctrl.items.isEmpty) {
@@ -93,6 +114,7 @@ class _AdminMapPlaceholderState extends State<AdminMapPlaceholder> {
           ? LatLng(focused.latitude, focused.longitude)
           : _averageCenter(ctrl.items);
       final zoom = focused != null ? 14.8 : _defaultZoom;
+      _currentCenter = center;
       final markers = ctrl.items.map((station) {
         final selected = focused?.stationId == station.stationId;
         return Marker(
@@ -131,11 +153,15 @@ class _AdminMapPlaceholderState extends State<AdminMapPlaceholder> {
               options: MapOptions(
                 initialCenter: center,
                 initialZoom: zoom,
-                minZoom: 10.0,
-                maxZoom: 16.0,
+                minZoom: _minZoom,
+                maxZoom: _maxZoom,
                 interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all,
+                  flags: InteractiveFlag.all & ~InteractiveFlag.scrollWheelZoom,
                 ),
+                onPositionChanged: (position, _) {
+                  _currentCenter = position.center;
+                  _currentZoom = position.zoom;
+                },
               ),
               children: [
                 TileLayer(
@@ -182,22 +208,59 @@ class _AdminMapPlaceholderState extends State<AdminMapPlaceholder> {
             Positioned(
               top: 12,
               right: 12,
-              child: Material(
-                color: Colors.white.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(999),
-                elevation: 1,
-                child: IconButton(
-                  onPressed: _resetMapView,
-                  icon: const Icon(Icons.refresh),
-                  tooltip: '지도 초기화',
-                  color: const Color(0xFF334155),
-                ),
+              child: Column(
+                children: [
+                  _MapActionButton(
+                    onPressed: _canZoomIn ? () => _zoomBy(_zoomStep) : null,
+                    icon: Icons.add,
+                    tooltip: '지도 확대',
+                  ),
+                  const SizedBox(height: 8),
+                  _MapActionButton(
+                    onPressed: _canZoomOut ? () => _zoomBy(-_zoomStep) : null,
+                    icon: Icons.remove,
+                    tooltip: '지도 축소',
+                  ),
+                  const SizedBox(height: 8),
+                  _MapActionButton(
+                    onPressed: _resetMapView,
+                    icon: Icons.refresh,
+                    tooltip: '지도 초기화',
+                  ),
+                ],
               ),
             ),
           ],
         ),
       );
     });
+  }
+}
+
+class _MapActionButton extends StatelessWidget {
+  const _MapActionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.tooltip,
+  });
+
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.92),
+      borderRadius: BorderRadius.circular(999),
+      elevation: 1,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        tooltip: tooltip,
+        color: const Color(0xFF334155),
+      ),
+    );
   }
 }
 
