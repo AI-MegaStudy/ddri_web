@@ -1,0 +1,184 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.4">
+  <diagram id="fastapi-standalone-module" name="FastAPI Module">
+    <mxGraphModel dx="2037" dy="1073" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=28;fontStyle=1" value="FastAPI 단독 모듈 디자인 (DDRI Backend)" vertex="1">
+          <mxGeometry height="45" width="1300" x="40" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="project" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=top;fontSize=16;fontStyle=1" value="fastapi/app" vertex="1">
+          <mxGeometry height="30" width="260" x="2290" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="main" parent="1" style="swimlane;html=1;rounded=0;startSize=60;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/main.py&#xa;FastAPI app" vertex="1">
+          <mxGeometry height="220" width="580" x="840" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="main_body" parent="main" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="핵심: app = FastAPI(...), CORS 설정&#xa;함수: root(), health_check()&#xa;연결: include_router(weather, ddri_user, ddri_admin, ddri_stations)" vertex="1">
+          <mxGeometry height="160" width="580" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="api_weather" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/api/weather.py&#xa;APIRouter" vertex="1">
+          <mxGeometry height="220" width="430" x="15" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="api_weather_body" parent="api_weather" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="엔드포인트:&#xa;GET /v1/weather/direct&#xa;GET /v1/weather/direct/single&#xa;사용: validate_iso_datetime(), validate_date_yyyy_mm_dd(), WeatherService" vertex="1">
+          <mxGeometry height="162" width="430" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="api_user" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/api/ddri_user.py&#xa;APIRouter" vertex="1">
+          <mxGeometry height="250" width="430" x="590" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="api_user_body" parent="api_user" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="엔드포인트:&#xa;GET /v1/user/stations/nearby&#xa;사용: get_beta_user_items(), get_beta_user_prediction_logs()&#xa;사용: validate_iso_datetime(), get_service_mode(), is_beta_mode()&#xa;사용: save_prediction_logs_safely()" vertex="1">
+          <mxGeometry height="192" width="430" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="api_admin" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/api/ddri_admin.py&#xa;APIRouter" vertex="1">
+          <mxGeometry height="290" width="570" x="1540" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="api_admin_body" parent="api_admin" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="엔드포인트:&#xa;GET /v1/admin/stations/risk&#xa;내부함수: _build_weather_payload(base_datetime, district_name)&#xa;사용: get_beta_admin_items(), get_beta_admin_prediction_logs(), get_beta_weather_reference()&#xa;사용: validate_*(), get_service_mode(), is_beta_mode()&#xa;사용: WeatherService, save_prediction_logs_safely()" vertex="1">
+          <mxGeometry height="232" width="400" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="api_stations" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/api/ddri_stations.py&#xa;APIRouter" vertex="1">
+          <mxGeometry height="220" width="430" x="1810" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="api_stations_body" parent="api_stations" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="엔드포인트:&#xa;GET /v1/stations&#xa;사용: get_beta_master_items()&#xa;사용: validate_district_name(), validate_cluster_code()&#xa;사용: get_service_mode(), is_beta_mode()" vertex="1">
+          <mxGeometry height="162" width="430" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="beta_data" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/api/beta_station_data.py&#xa;런타임 데이터 조합 모듈" vertex="1">
+          <mxGeometry height="340" width="520" x="400" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="beta_data_body" parent="beta_data" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="상수: BETA_STATIONS&#xa;핵심함수:&#xa;get_beta_user_items(lat, lng, limit, target_datetime, radius_m, service_tag)&#xa;get_beta_admin_items(district_name, urgent_only, sort_by, sort_order, base_datetime, service_tag)&#xa;get_beta_master_items(district_name, cluster_code, service_tag)&#xa;get_beta_user_prediction_logs(...), get_beta_admin_prediction_logs(...)&#xa;get_beta_weather_reference(district_name)&#xa;내부: _enrich_station_prediction(), _build_prediction_log()" vertex="1">
+          <mxGeometry height="282" width="520" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="security" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/utils/security.py" vertex="1">
+          <mxGeometry height="260" width="380" x="960" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="security_body" parent="security" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="검증 함수:&#xa;validate_iso_datetime(), validate_date_yyyy_mm_dd()&#xa;validate_sort_by(), validate_sort_order()&#xa;validate_district_name(), validate_cluster_code()&#xa;safe 메시지: get_safe_bad_request_detail(), get_safe_weather_error_message()" vertex="1">
+          <mxGeometry height="202" width="380" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="runtime_config" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/core/runtime_config.py" vertex="1">
+          <mxGeometry height="220" width="330" x="1410" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="runtime_config_body" parent="runtime_config" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="환경변수 기반 모드 전환:&#xa;get_service_mode()&#xa;is_beta_mode()&#xa;is_debug_log_enabled()" vertex="1">
+          <mxGeometry height="162" width="330" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="prediction_runtime" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/core/prediction_runtime.py" vertex="1">
+          <mxGeometry height="280" width="620" x="1880" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="prediction_runtime_body" parent="prediction_runtime" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="클래스: PredictionRuntime&#xa;핵심: has_bundle(), load_bundle(), predict_station(station_id, target_datetime, current_bike_stock, is_holiday)&#xa;결과 모델: StationPredictionResult" vertex="1">
+          <mxGeometry height="222" width="430" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="weather_service" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/utils/weather_service.py" vertex="1">
+          <mxGeometry height="260" width="500" x="120" y="1160" as="geometry" />
+        </mxCell>
+        <mxCell id="weather_service_body" parent="weather_service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="클래스: WeatherService&#xa;함수: fetch_daily_forecast(), fetch_single_day_weather(), fetch_single_datetime_weather()&#xa;의존: weather_mapping(get_weather_type_korean, get_weather_icon_url, get_weather_main_from_wmo)&#xa;외부호출: Open-Meteo API" vertex="1">
+          <mxGeometry height="202" width="500" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="realtime_service" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/utils/realtime_bike_service.py" vertex="1">
+          <mxGeometry height="280" width="500" x="660" y="1160" as="geometry" />
+        </mxCell>
+        <mxCell id="realtime_service_body" parent="realtime_service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="클래스: RealtimeBikeService&#xa;함수: refresh(), get_all_rows(), get_station_snapshot(station_id)&#xa;캐시: TTL 기반(_cached_rows, _cached_at)&#xa;외부호출: 서울시 따릉이 Open API" vertex="1">
+          <mxGeometry height="222" width="500" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="pred_logs" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/database/prediction_logs.py" vertex="1">
+          <mxGeometry height="280" width="460" x="1230" y="1460" as="geometry" />
+        </mxCell>
+        <mxCell id="pred_logs_body" parent="pred_logs" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="함수: ensure_prediction_logs_schema(), save_prediction_logs(), save_prediction_logs_safely()&#xa;역할: 예측 로그 best-effort 저장&#xa;의존: connect_db(), DB_CONFIG, mysql/init_schema.sql" vertex="1">
+          <mxGeometry height="222" width="460" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="db_conn" parent="1" style="swimlane;html=1;rounded=0;startSize=58;strokeColor=#000000;fillColor=#ffffff;fontSize=12;align=left;verticalAlign=middle;spacingLeft=8;" value="app/database/connection.py (+ connection_local.py)" vertex="1">
+          <mxGeometry height="220" width="380" x="1790" y="1190" as="geometry" />
+        </mxCell>
+        <mxCell id="db_conn_body" parent="db_conn" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=8;spacingTop=8;fontSize=12;" value="DB_CONFIG 로드(.env)&#xa;함수: connect_db()&#xa;드라이버: pymysql" vertex="1">
+          <mxGeometry height="162" width="380" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="external_weather" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#F8FAFC;fontSize=12;" value="External: Open-Meteo API" vertex="1">
+          <mxGeometry height="80" width="220" x="120" y="1470" as="geometry" />
+        </mxCell>
+        <mxCell id="external_bike" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#F8FAFC;fontSize=12;" value="External: Seoul Bike API" vertex="1">
+          <mxGeometry height="80" width="220" x="660" y="1470" as="geometry" />
+        </mxCell>
+        <mxCell id="external_db" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#F8FAFC;fontSize=12;" value="External: MySQL(ddri_db)" vertex="1">
+          <mxGeometry height="80" width="220" x="2000" y="1480" as="geometry" />
+        </mxCell>
+        <mxCell id="external_bundle" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#F8FAFC;fontSize=12;" value="Local: models/runtime/*.joblib" vertex="1">
+          <mxGeometry height="80" width="240" x="2290" y="1250" as="geometry" />
+        </mxCell>
+        <mxCell id="e_main_weather" edge="1" parent="1" source="main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="api_weather" value="include_router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_main_user" edge="1" parent="1" source="main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="api_user" value="include_router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_main_admin" edge="1" parent="1" source="main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="api_admin" value="include_router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_main_st" edge="1" parent="1" source="main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=11;" target="api_stations" value="include_router">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_user_beta" edge="1" parent="1" source="api_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="beta_data" value="use">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_admin_beta" edge="1" parent="1" source="api_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="beta_data" value="use">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_st_beta" edge="1" parent="1" source="api_stations" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="beta_data" value="use">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_w_sec" edge="1" parent="1" source="api_weather" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="security" value="validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_sec" edge="1" parent="1" source="api_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="security" value="validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a_sec" edge="1" parent="1" source="api_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="security" value="validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_s_sec" edge="1" parent="1" source="api_stations" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="security" value="validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_mode" edge="1" parent="1" source="api_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="runtime_config" value="mode check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a_mode" edge="1" parent="1" source="api_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="runtime_config" value="mode check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_s_mode" edge="1" parent="1" source="api_stations" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="runtime_config" value="mode check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_w_ws" edge="1" parent="1" source="api_weather" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="weather_service" value="weather fetch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a_ws" edge="1" parent="1" source="api_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="weather_service" value="weather payload">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_beta_rt" edge="1" parent="1" source="beta_data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="realtime_service" value="realtime stock">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_beta_pred" edge="1" parent="1" source="beta_data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="prediction_runtime" value="predict_station">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_beta_mode" edge="1" parent="1" source="beta_data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="runtime_config" value="debug/mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u_logs" edge="1" parent="1" source="api_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="pred_logs" value="save_prediction_logs_safely">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a_logs" edge="1" parent="1" source="api_admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="pred_logs" value="save_prediction_logs_safely">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_logs_conn" edge="1" parent="1" source="pred_logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;" target="db_conn" value="connect_db / schema">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ws_ext" edge="1" parent="1" source="weather_service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;dashed=1;" target="external_weather" value="HTTP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rt_ext" edge="1" parent="1" source="realtime_service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;dashed=1;" target="external_bike" value="HTTP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_db_ext" edge="1" parent="1" source="db_conn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;dashed=1;" target="external_db" value="SQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pred_bundle" edge="1" parent="1" source="prediction_runtime" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;fontSize=11;dashed=1;" target="external_bundle" value="joblib load">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

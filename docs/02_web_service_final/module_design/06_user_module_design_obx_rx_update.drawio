@@ -1,0 +1,87 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.4">
+  <diagram id="user-module-obx-rx-v2" name="User Module">
+    <mxGraphModel dx="1700" dy="1224" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;fontSize=26;fontStyle=1" value="사용자 화면(/user) : Module Design with Obx + Rx" vertex="1">
+          <mxGeometry height="40" width="1200" x="40" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="project" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=top;fontSize=16;fontStyle=1" value="ddri_web" vertex="1">
+          <mxGeometry height="30" width="240" x="1910" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="user_view" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserView(StatelessWidget)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;연결: Get.put(UserPageController(), permanent: true)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="90" width="310" x="220" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="user_ctrl" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserPageController(GetxController)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;&lt;b&gt;Obx + Rx 변수&lt;/b&gt;&lt;br&gt;lat, lng, address, targetDatetime, selectedRadiusM&lt;br&gt;items, focusedStation, weeklyForecast, selectedForecast&lt;br&gt;isLoading, isLoadingLocation, isLoadingWeather&lt;br&gt;weatherExpanded, errorMessage, weatherErrorMessage&lt;br&gt;serviceMode, listMode&lt;br&gt;&lt;br&gt;&lt;b&gt;함수&lt;/b&gt;&lt;br&gt;setSelectedRadius(int? m)&lt;br&gt;setTargetDatetime(DateTime dt)&lt;br&gt;fetchCurrentLocation()&lt;br&gt;applyAddressAndFetch(double newLat, double newLng, String addr)&lt;br&gt;_fetchStations()&lt;br&gt;_fetchWeather()&lt;br&gt;retryWeather()&lt;br&gt;toggleWeatherExpanded()&lt;br&gt;focusStation(StationNearbyItem station)&lt;br&gt;clearFocusedStation()&lt;br&gt;onRadiusFilterChanged(int? radiusM)&lt;br&gt;onDatetimeChanged(DateTime dt)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="400" width="380" x="1050" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="search_box" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserSearchArea(StatelessWidget)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;Obx + Rx: isLoadingLocation, address, selectedRadiusM, errorMessage&lt;br&gt;함수: _openAddressSearch(BuildContext context, UserPageController ctrl)&lt;br&gt;호출: fetchCurrentLocation(), applyAddressAndFetch(double, double, String), onRadiusFilterChanged(int?), onDatetimeChanged(DateTime)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="170" width="270" x="20" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="weather_box" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserWeatherSection(StatelessWidget)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;Obx + Rx: hasLocation, weatherErrorMessage, weeklyForecast, selectedForecast, isLoadingWeather, weatherExpanded&lt;br&gt;함수 호출: toggleWeatherExpanded(), retryWeather()&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="140" width="300" x="20" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="map_box" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserMapSection(StatefulWidget), _UserMapSectionState(State)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;Obx + Rx: hasLocation, lat, lng, items, focusedStation, isLoadingLocation&lt;br&gt;ever: ever(...), ever&amp;gt;(...)&lt;br&gt;함수: _moveToStation(StationNearbyItem station), _resetMapView(), _zoomBy(double delta)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="260" width="380" x="460" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="list_box" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserStationList(StatelessWidget)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;Obx + Rx: isLoading, items, hasLocation, stationListTitle&lt;br&gt;함수: build(BuildContext context)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="190" width="250" x="950" y="1070" as="geometry" />
+        </mxCell>
+        <mxCell id="card_box" parent="1" style="shape=rectangle;container=1;collapsible=0;rounded=0;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;verticalAlign=top;fontSize=12;spacing=0;" value="&lt;table style=&quot;width:100%;height:100%;border-collapse:collapse;&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 1px solid rgb(0, 0, 0); padding: 6px;&quot;&gt;&lt;b&gt;UserStationCard(StatelessWidget)&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;padding:6px;vertical-align:top;&quot;&gt;Obx + Rx: focusedStation&lt;br&gt;함수 호출: focusStation(StationNearbyItem station)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;" vertex="1">
+          <mxGeometry height="160" width="230" x="430" y="1240" as="geometry" />
+        </mxCell>
+        <mxCell id="e_route" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_view" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="270" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_put" edge="1" parent="1" source="user_view" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_ctrl" value="put">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find_search" edge="1" parent="1" source="search_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_ctrl" value="find">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find_weather" edge="1" parent="1" source="weather_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_ctrl" value="find">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find_map" edge="1" parent="1" source="map_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_ctrl" value="find">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find_list" edge="1" parent="1" source="list_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_ctrl" value="find">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find_card" edge="1" parent="1" source="card_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;fontSize=12;" target="user_ctrl" value="find">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-1" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeWidth=3;" value="main()" vertex="1">
+          <mxGeometry height="60" width="180" x="500" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-2" parent="2qHf63CA2kOqU-mQLyKi-1" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="home: usePathUrlStrategy()" vertex="1">
+          <mxGeometry height="30" width="180" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_view.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="300" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_search_area.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="80" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_weather_section.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="110" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-13" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_map_section.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="590" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-14" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_station_card.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="500" y="1200" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_station_list.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="1020" y="1030" as="geometry" />
+        </mxCell>
+        <mxCell id="2qHf63CA2kOqU-mQLyKi-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;b style=&quot;text-align: left;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;user_page_controller.dart&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="1150" y="320" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
