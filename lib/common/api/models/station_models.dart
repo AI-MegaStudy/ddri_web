@@ -33,6 +33,11 @@ class StationNearbyItem {
   final String operationalStatus;
   final String serviceTag;
 
+  static int _intValue(Object? value) {
+    if (value is num) return value.round();
+    return 0;
+  }
+
   factory StationNearbyItem.fromJson(Map<String, dynamic> json) {
     return StationNearbyItem(
       stationId: json['station_id'] as int,
@@ -41,7 +46,7 @@ class StationNearbyItem {
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       distanceM: (json['distance_m'] as num).toDouble(),
-      currentBikeStock: json['current_bike_stock'] as int? ?? 0,
+      currentBikeStock: _intValue(json['current_bike_stock']),
       predictedRentalCount:
           (json['predicted_rental_count'] as num?)?.toDouble() ?? 0,
       predictedRemainingBikes:
@@ -90,6 +95,11 @@ class StationRiskItem {
   final String operationalStatus;
   final String serviceTag;
 
+  static int _intValue(Object? value) {
+    if (value is num) return value.round();
+    return 0;
+  }
+
   factory StationRiskItem.fromJson(Map<String, dynamic> json) {
     return StationRiskItem(
       stationId: json['station_id'] as int,
@@ -98,14 +108,14 @@ class StationRiskItem {
       clusterCode: json['cluster_code'] as String? ?? '',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
-      currentBikeStock: json['current_bike_stock'] as int? ?? 0,
+      currentBikeStock: _intValue(json['current_bike_stock']),
       predictedDemand: (json['predicted_demand'] as num?)?.toDouble() ?? 0,
       predictedRemainingBikes:
           (json['predicted_remaining_bikes'] as num?)?.toDouble() ?? 0,
       shortageBikes: (json['shortage_bikes'] as num?)?.toDouble() ?? 0,
       stockGap: (json['stock_gap'] as num?)?.toDouble() ?? 0,
       riskScore: (json['risk_score'] as num?)?.toDouble() ?? 0,
-      reallocationPriority: json['reallocation_priority'] as int? ?? 0,
+      reallocationPriority: _intValue(json['reallocation_priority']),
       operationalStatus: json['operational_status'] as String? ?? '',
       serviceTag: json['service_tag'] as String? ?? '',
     );

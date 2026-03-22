@@ -19,7 +19,7 @@ class AppConfig {
 
   // static const String? customApiBaseUrl = 'http://192.168.90.7:8000';
   // static const String? customApiBaseUrl =
-  // 'https://cheng80.myqnapcloud.com:18000';
+  //     'http://cheng80.myqnapcloud.com:18000';
 }
 
 /// FastAPI 서버 베이스 URL 반환.
