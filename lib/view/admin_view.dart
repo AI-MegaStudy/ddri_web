@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../app_config.dart';
 import '../common/beta/beta_mode_widgets.dart';
 import '../common/layout/app_scaffold.dart';
 import '../core/design_token.dart';
@@ -168,7 +169,7 @@ class _AdminViewState extends State<AdminView> {
       return BetaModeRibbon(
         enabled: isBetaMode,
         child: AppScaffold(
-          title: '재배치 관리',
+          title: AppConfig.adminPageTitle,
           currentPath: '/admin',
           body: LayoutBuilder(
             builder: (context, constraints) {
@@ -222,7 +223,7 @@ class _AdminViewState extends State<AdminView> {
                               : const _AdminContentStackLayout(),
                           const SizedBox(height: 24),
                           Text(
-                            '© 2023 DDRI Reallocation Support System. Gangnam-gu Smart Mobility Division.',
+                            AppConfig.adminFooterCopy,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: const Color(0xFF94A3B8)),

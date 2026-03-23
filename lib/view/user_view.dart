@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../app_config.dart';
 import '../common/beta/beta_mode_widgets.dart';
 import '../common/layout/app_scaffold.dart';
 import '../core/design_token.dart';
@@ -197,7 +198,7 @@ class _UserViewState extends State<UserView> {
       return BetaModeRibbon(
         enabled: isBetaMode,
         child: AppScaffold(
-          title: '대여소 조회',
+          title: AppConfig.userPageTitle,
           currentPath: '/user',
           body: LayoutBuilder(
             builder: (context, constraints) {
