@@ -28,7 +28,8 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
     final viewportLabel = _viewportLabel(width);
     final widthLabel = width.toStringAsFixed(0);
     final heightLabel = height.toStringAsFixed(0);
-    final centerSlotWidth = width >= 720 ? 180.0 : 112.0;
+    final showViewportBadge = width >= 480;
+    final viewportBadgeWidth = width >= 720 ? 88.0 : 56.0;
 
     return AppBar(
       toolbarHeight: 64,
@@ -40,71 +41,65 @@ class TopNavBar extends StatelessWidget implements PreferredSizeWidget {
       shadowColor: Colors.transparent,
       title: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Stack(
-          alignment: Alignment.center,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: DesignToken.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.pedal_bike_rounded,
-                          color: DesignToken.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: Text(
-                          title ?? AppConfig.appTitle,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: const Color(0xFF0F172A),
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.3,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: DesignToken.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.pedal_bike_rounded,
+                      color: DesignToken.primary,
+                      size: 20,
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      title ?? AppConfig.appTitle,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFF0F172A),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showViewportBadge) ...[
+                  _ViewportBadge(
+                    sizeText: '$widthLabel x $heightLabel',
+                    deviceText: viewportLabel,
+                    compact: width < 720,
+                    width: viewportBadgeWidth,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                _NavLink(
+                  label: '사용자',
+                  selected: isUser,
+                  onTap: isUser ? null : () => Get.offAllNamed(RoutePaths.user),
                 ),
-                SizedBox(width: centerSlotWidth),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _NavLink(
-                      label: '사용자',
-                      selected: isUser,
-                      onTap: isUser
-                          ? null
-                          : () => Get.offAllNamed(RoutePaths.user),
-                    ),
-                    const SizedBox(width: 8),
-                    _NavLink(
-                      label: '관리자',
-                      selected: isAdmin,
-                      onTap: isAdmin
-                          ? null
-                          : () => Get.offAllNamed(RoutePaths.admin),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                _NavLink(
+                  label: '관리자',
+                  selected: isAdmin,
+                  onTap: isAdmin
+                      ? null
+                      : () => Get.offAllNamed(RoutePaths.admin),
                 ),
               ],
-            ),
-            _ViewportBadge(
-              sizeText: '$widthLabel x $heightLabel',
-              deviceText: viewportLabel,
-              compact: width < 720,
-              width: centerSlotWidth,
             ),
           ],
         ),
@@ -146,8 +141,8 @@ class _ViewportBadge extends StatelessWidget {
         width: width,
         alignment: Alignment.center,
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 8 : 12,
-          vertical: compact ? 4 : 6,
+          horizontal: compact ? 6 : 8,
+          vertical: compact ? 3 : 4,
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF0F172A).withValues(alpha: 0.06),
@@ -166,11 +161,11 @@ class _ViewportBadge extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF334155),
                 fontWeight: FontWeight.w800,
-                fontSize: compact ? 10 : 12,
+                fontSize: compact ? 7 : 8,
                 height: 1.0,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               deviceText,
               maxLines: 1,
@@ -178,7 +173,7 @@ class _ViewportBadge extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w700,
-                fontSize: compact ? 9 : 11,
+                fontSize: compact ? 6 : 7,
                 height: 1.0,
               ),
             ),

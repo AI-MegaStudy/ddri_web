@@ -20,8 +20,8 @@ class UserMapSection extends StatefulWidget {
 }
 
 class _UserMapSectionState extends State<UserMapSection> {
-  /// 기본 줌 레벨 (사용자 위치 기준)
-  static const double _defaultZoom = 15.0;
+  /// 기본 뷰포트를 기존보다 약 30% 넓게 보이도록 초기 줌을 낮춘다.
+  static const double _defaultZoom = 14.6;
   static const double _minZoom = 10.0;
   static const double _maxZoom = 15.75;
   static const double _zoomStep = 0.25;

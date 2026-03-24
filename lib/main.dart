@@ -5,6 +5,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'app.dart';
+import 'common/web/web_brand_sync.dart';
 
 /// 앱 진입점.
 /// 웹에서는 Path 기반 URL을 사용해 깔끔한 라우트(/user, /admin)를 제공한다.
@@ -14,6 +15,7 @@ Future<void> main() async {
 
   if (kIsWeb) {
     usePathUrlStrategy(); // /#/user → /user (path 기반 URL)
+    syncWebBranding();
   }
   runApp(const App());
 }

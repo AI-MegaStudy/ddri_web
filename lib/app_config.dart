@@ -8,7 +8,12 @@ import 'app_config_platform_stub.dart'
 class AppConfig {
   AppConfig._();
 
-  static const String appTitle = 'DDRI';
+  static const String appTitle = '따릉이랑';
+  static const String userPageTitle = '$appTitle 대여소 조회';
+  static const String adminPageTitle = '$appTitle 재배치 관리';
+
+  static const String adminFooterCopy =
+      '© 2023 $appTitle Reallocation Support System. Gangnam-gu Smart Mobility Division.';
 
   /// 카카오 JavaScript API 키 (주소 검색→위경도 변환용, 웹에서 필요)
   static const String kakaoJsKey = '945bd56201340c858e34dda4bea79688';
