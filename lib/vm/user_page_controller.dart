@@ -68,20 +68,7 @@ class UserPageController extends GetxController {
       isLoadingLocation.value = true;
       _shouldRefocusOnNextResult = true;
       if (kIsWeb) {
-        final pos = await Geolocator.getCurrentPosition(
-          locationSettings: WebSettings(
-            accuracy: LocationAccuracy.medium,
-            timeLimit: Duration(seconds: 15),
-            maximumAge: Duration(minutes: 1),
-          ),
-        );
-        ddriDebugPrint(
-          '[DDRI] 현 위치 좌표(web): lat=${pos.latitude}, lng=${pos.longitude}',
-        );
-        lat.value = pos.latitude;
-        lng.value = pos.longitude;
-        address.value = '현재 위치';
-        await Future.wait([_fetchStations(), _fetchWeather()]);
+        await _fetchCurrentLocationForWeb();
         return;
       }
 
@@ -147,6 +134,56 @@ class UserPageController extends GetxController {
     lng.value = newLng;
     address.value = addr;
     _shouldRefocusOnNextResult = true;
+    await Future.wait([_fetchStations(), _fetchWeather()]);
+  }
+
+  Future<void> _fetchCurrentLocationForWeb() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      errorMessage.value = '브라우저 또는 macOS 위치 서비스가 꺼져 있습니다. 위치 서비스를 켠 뒤 다시 시도해 주세요.';
+      return;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied) {
+      errorMessage.value = '위치 권한이 필요합니다. 브라우저에서 위치 접근을 허용한 뒤 다시 시도해 주세요.';
+      return;
+    }
+
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: WebSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 20),
+          maximumAge: Duration(minutes: 5),
+        ),
+      );
+      await _applyCurrentPosition(pos, sourceLabel: 'web');
+    } on PermissionDeniedException catch (e) {
+      ddriDebugPrint('[DDRI] 웹 현 위치 권한 거부: $e (permission=$permission)');
+      errorMessage.value =
+          '브라우저 위치 권한이 실제로 적용되지 않았습니다. 주소창 왼쪽 사이트 권한과 macOS 위치 서비스에서 Chrome 허용 상태를 다시 확인해 주세요.';
+    } on PositionUpdateException catch (e) {
+      ddriDebugPrint('[DDRI] 웹 현 위치 실시간 조회 실패: $e');
+      errorMessage.value =
+          '브라우저가 현재 위치를 아직 확인하지 못했습니다. 잠시 후 다시 시도하거나 주소 검색을 이용해 주세요.';
+    }
+  }
+
+  Future<void> _applyCurrentPosition(
+    Position pos, {
+    required String sourceLabel,
+  }) async {
+    ddriDebugPrint(
+      '[DDRI] 현 위치 좌표($sourceLabel): lat=${pos.latitude}, lng=${pos.longitude}',
+    );
+    lat.value = pos.latitude;
+    lng.value = pos.longitude;
+    address.value = '현재 위치';
     await Future.wait([_fetchStations(), _fetchWeather()]);
   }
 

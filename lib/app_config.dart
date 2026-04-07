@@ -20,18 +20,18 @@ class AppConfig {
 
   /// FastAPI 서버 기본 URL (커스텀 오버라이드)
   /// null/빈값이면 플랫폼 자동 선택 (웹·iOS: 127.0.0.1, Android 에뮬: 10.0.2.2)
-  static const String? customApiBaseUrl = null;
+  // static const String? customApiBaseUrl = null;
 
   // static const String? customApiBaseUrl = 'http://192.168.90.7:8000';
-  // static const String? customApiBaseUrl =
-  //     'http://cheng80.myqnapcloud.com:18000';
+  static const String customApiBaseUrl =
+      'https://cheng80.myqnapcloud.com:18443';
 }
 
 /// FastAPI 서버 베이스 URL 반환.
 /// [AppConfig.customApiBaseUrl]이 있으면 사용, 없으면 플랫폼 기본값(웹: 127.0.0.1:8000).
 String getApiBaseUrl() {
-  if (AppConfig.customApiBaseUrl?.trim().isNotEmpty ?? false) {
-    return AppConfig.customApiBaseUrl?.trim() ?? '';
+  if (AppConfig.customApiBaseUrl.trim().isNotEmpty ?? false) {
+    return AppConfig.customApiBaseUrl.trim() ?? '';
   }
   return platform_config.getPlatformDefaultApiUrl();
 }

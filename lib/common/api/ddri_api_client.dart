@@ -36,7 +36,27 @@ class DdriApiClient {
         body: response.body,
       );
     }
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    _throwIfLogicalError(json);
+    return json;
+  }
+
+  void _throwIfLogicalError(Map<String, dynamic> json) {
+    final result = json['result'];
+    final errorMsg = json['errorMsg'];
+
+    final hasErrorResult =
+        result is String && result.trim().toLowerCase() == 'error';
+    final hasErrorMessage = errorMsg is String && errorMsg.trim().isNotEmpty;
+
+    if (hasErrorResult || hasErrorMessage) {
+      throw ApiException(
+        200,
+        hasErrorMessage
+            ? errorMsg.trim()
+            : '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      );
+    }
   }
 
   /// 근처 대여소 조회
@@ -118,14 +138,18 @@ class DdriApiClient {
     required double lat,
     required double lon,
   }) async {
+    ddriDebugPrint('[DDRI] 날씨 주간 요청: lat=$lat, lon=$lon');
     final json = await _get(
       '/weather/direct',
       queryParams: {'lat': lat.toString(), 'lon': lon.toString()},
     );
-    return (json['results'] as List<dynamic>?)
+    final results =
+        (json['results'] as List<dynamic>?)
             ?.map((e) => WeatherDayItem.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
+    ddriDebugPrint('[DDRI] 날씨 주간 응답: items=${results.length}');
+    return results;
   }
 
   /// 선택 날짜 날씨 조회
@@ -134,6 +158,9 @@ class DdriApiClient {
     required double lon,
     required String targetDatetime,
   }) async {
+    ddriDebugPrint(
+      '[DDRI] 날씨 선택시각 요청: lat=$lat, lon=$lon, targetDatetime=$targetDatetime',
+    );
     final json = await _get(
       '/weather/direct/single',
       queryParams: {
@@ -144,8 +171,13 @@ class DdriApiClient {
     );
     final result = json['result'];
     if (result is Map<String, dynamic>) {
-      return WeatherDayItem.fromJson(result);
+      final item = WeatherDayItem.fromJson(result);
+      ddriDebugPrint(
+        '[DDRI] 날씨 선택시각 응답: type=${item.weatherType}, low=${item.weatherLow}, high=${item.weatherHigh}',
+      );
+      return item;
     }
+    ddriDebugPrint('[DDRI] 날씨 선택시각 응답: result=null');
     return null;
   }
 }
